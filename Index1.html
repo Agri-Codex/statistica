@@ -1,0 +1,3472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Statistica — Professional Statistical Analysis</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.11.0/math.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --ink:         #1a2409;
+    --paper:       #f4f7ee;
+    --cream:       #e8eed8;
+    --warm-mid:    #a8b88a;
+    --accent:      #2d6a1f;
+    --accent-lt:   #3d8a2a;
+    --accent2:     #7a9e2e;
+    --accent3:     #c47c1e;
+    --gold:        #d4a017;
+    --muted:       #5a6b45;
+    --border:      #c8d8aa;
+    --panel:       #fafcf5;
+    --sidebar-bg:  #162008;
+    --header-bg:   #1d2d0e;
+    --result-bg:   #0c1506;
+    --result-text: #e8f5d0;
+    --result-green:#6fd644;
+    --result-yellow:#e8c84a;
+    --result-red:  #e05a3a;
+    --result-blue: #7ecfaa;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Header */
+  header {
+    background: var(--header-bg);
+    color: var(--paper);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 3px solid var(--gold);
+  }
+
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .logo span { color: var(--gold); }
+
+  .logo-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--warm-mid);
+    font-weight: 300;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .header-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--warm-mid);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* Layout */
+  .app {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: calc(100vh - 64px);
+  }
+
+  /* Sidebar */
+  .sidebar {
+    background: var(--sidebar-bg);
+    color: var(--paper);
+    padding: 1.5rem 0;
+    position: sticky;
+    top: 64px;
+    height: calc(100vh - 64px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--muted) transparent;
+  }
+
+  .sidebar-section {
+    padding: 0 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .sidebar-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--warm-mid);
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid #1e3a0e;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    color: #aaa;
+    transition: all 0.15s;
+    margin-bottom: 2px;
+  }
+
+  .nav-item:hover { background: #1a1a1a; color: var(--paper); }
+  .nav-item.active { background: var(--accent); color: white; border-left: 3px solid var(--gold); }
+
+  .nav-item .icon {
+    width: 18px;
+    text-align: center;
+    font-size: 0.75rem;
+    opacity: 0.7;
+  }
+
+  /* Main content */
+  .main {
+    padding: 2rem;
+    max-width: 1100px;
+  }
+
+  /* Analysis panels */
+  .analysis-panel {
+    display: none;
+  }
+  .analysis-panel.active { display: block; }
+
+  .panel-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border);
+  }
+
+  .panel-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.25rem;
+  }
+
+  .panel-desc {
+    color: var(--muted);
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+
+  /* Input section */
+  .input-section {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .input-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+
+  textarea, input[type="text"], input[type="number"], select {
+    width: 100%;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.6rem 0.75rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  textarea:focus, input:focus, select:focus {
+    border-color: var(--accent);
+  }
+
+  textarea { resize: vertical; min-height: 80px; }
+
+  .input-hint {
+    font-size: 0.73rem;
+    color: var(--warm-mid);
+    margin-top: 0.35rem;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* Grid inputs */
+  .input-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .input-group { display: flex; flex-direction: column; gap: 0.35rem; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.25rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+  }
+  .btn-primary:hover { background: var(--accent-lt); }
+
+  .btn-secondary {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .btn-secondary:hover { background: #222; }
+
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .btn-outline:hover { border-color: var(--ink); color: var(--ink); }
+
+  .btn-row {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+  }
+
+  /* Results */
+  .results-container {
+    background: var(--result-bg);
+    border-radius: 8px;
+    padding: 1.5rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--result-text);
+    line-height: 1.8;
+    display: none;
+    position: relative;
+    overflow-x: auto;
+  }
+
+  .results-container.show { display: block; }
+
+  .results-header {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #888;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #1e3a0e;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .r-section {
+    margin-bottom: 1rem;
+  }
+
+  .r-title {
+    color: var(--result-blue);
+    font-weight: 500;
+    margin-bottom: 0.4rem;
+  }
+
+  .r-val { color: var(--result-green); }
+  .r-key { color: var(--result-yellow); }
+  .r-note { color: #888; font-size: 0.75rem; }
+  .r-sig { color: var(--result-red); }
+  .r-ok { color: var(--result-green); }
+
+  .r-table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.78rem;
+  }
+
+  .r-table th {
+    color: var(--result-blue);
+    text-align: left;
+    padding: 0.3rem 0.75rem;
+    border-bottom: 1px solid #1e3a0e;
+    font-weight: 500;
+  }
+
+  .r-table td {
+    padding: 0.3rem 0.75rem;
+    border-bottom: 1px solid #16280a;
+    color: var(--result-text);
+  }
+
+  .r-table tr:hover td { background: #0f1e07; }
+
+  .error-msg {
+    color: var(--result-red);
+    padding: 0.5rem;
+    background: #0f1e07;
+    border-radius: 4px;
+    border-left: 3px solid var(--result-red);
+  }
+
+  /* Chart canvas */
+  .chart-area {
+    margin-top: 1.25rem;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    display: none;
+  }
+
+  .chart-area.show { display: block; }
+
+  canvas {
+    max-width: 100%;
+    height: 280px !important;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+  }
+
+  .tab {
+    padding: 0.6rem 1.1rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+
+  .tab:hover { color: var(--ink); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* Stat cards */
+  .stat-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .stat-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.9rem;
+  }
+
+  .stat-card-label {
+    font-size: 0.68rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 0.3rem;
+  }
+
+  .stat-card-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  .sig-badge {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+    font-size: 0.7rem;
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+    margin-top: 0.5rem;
+  }
+
+  .sig-badge.sig { background: #fee2e2; color: #991b1b; }
+  .sig-badge.ns { background: #f0fdf4; color: #166534; }
+
+  hr.divider {
+    border: none;
+    border-top: 1px solid #1e3a0e;
+    margin: 0.75rem 0;
+  }
+
+  /* Scrollbar */
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 2px; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .main { padding: 1rem; }
+  }
+
+  .watermark {
+    font-family: 'DM Serif Display', serif;
+    font-size: 0.75rem;
+    color: var(--warm-mid);
+    font-style: italic;
+    position: absolute;
+    bottom: 0.75rem;
+    right: 1rem;
+  }
+
+  /* ── Upload Button in Header ── */
+  .upload-btn-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: transparent;
+    border: 1px solid #3a3a3a;
+    color: var(--warm-mid);
+    padding: 0.45rem 1rem;
+    border-radius: 4px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .upload-btn-header:hover { border-color: var(--accent); color: var(--paper); }
+  .upload-btn-header .up-icon { font-size: 0.85rem; }
+
+  /* ── Upload Modal Overlay ── */
+  .upload-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.72);
+    z-index: 500;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(3px);
+  }
+  .upload-overlay.open { display: flex; }
+
+  .upload-modal {
+    background: var(--paper);
+    border-radius: 10px;
+    border: 2px solid var(--border);
+    width: min(780px, 95vw);
+    max-height: 88vh;
+    overflow-y: auto;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .upload-modal-header {
+    background: var(--header-bg);
+    color: var(--paper);
+    padding: 1rem 1.5rem;
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .upload-modal-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.2rem;
+    letter-spacing: -0.01em;
+  }
+
+  .upload-modal-title span { color: var(--accent); }
+
+  .modal-close {
+    background: none;
+    border: none;
+    color: var(--warm-mid);
+    font-size: 1.3rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    transition: color 0.15s;
+  }
+  .modal-close:hover { color: var(--paper); }
+
+  .upload-modal-body { padding: 1.5rem; flex: 1; }
+
+  /* Drop zone */
+  .drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: white;
+    position: relative;
+  }
+  .drop-zone:hover, .drop-zone.dragover {
+    border-color: var(--accent);
+    background: #fff8f7;
+  }
+  .drop-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+  .drop-zone-icon {
+    font-size: 2.2rem;
+    margin-bottom: 0.6rem;
+    display: block;
+  }
+  .drop-zone-title {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 0.3rem;
+  }
+  .drop-zone-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  /* File info bar */
+  .file-info-bar {
+    display: none;
+    align-items: center;
+    gap: 0.75rem;
+    background: #f0fdf4;
+    border: 1px solid #86efac;
+    border-radius: 6px;
+    padding: 0.6rem 1rem;
+    margin-top: 0.75rem;
+    font-size: 0.82rem;
+    font-family: 'DM Mono', monospace;
+  }
+  .file-info-bar.show { display: flex; }
+  .file-info-name { font-weight: 500; color: #166534; }
+  .file-info-meta { color: #15803d; }
+
+  /* Parse options */
+  .parse-options {
+    display: none;
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  .parse-options.show { display: block; }
+  .parse-options-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+  }
+  .parse-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .parse-row label { font-size: 0.8rem; color: var(--muted); }
+  .parse-row select, .parse-row input[type="checkbox"] { width: auto; }
+
+  /* Preview table */
+  .preview-section {
+    display: none;
+    margin-top: 1.25rem;
+  }
+  .preview-section.show { display: block; }
+  .preview-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.6rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .preview-table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    max-height: 220px;
+    overflow-y: auto;
+  }
+  .preview-table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.78rem;
+    font-family: 'DM Mono', monospace;
+  }
+  .preview-table th {
+    background: var(--sidebar-bg);
+    color: var(--paper);
+    padding: 0.45rem 0.75rem;
+    text-align: left;
+    position: sticky;
+    top: 0;
+    white-space: nowrap;
+    font-weight: 400;
+    letter-spacing: 0.05em;
+  }
+  .preview-table th .col-idx {
+    font-size: 0.6rem;
+    color: var(--warm-mid);
+    display: block;
+  }
+  .preview-table td {
+    padding: 0.35rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .preview-table tr:hover td { background: var(--cream); color: var(--ink); }
+
+  /* Column selector */
+  .col-assign-section {
+    display: none;
+    margin-top: 1.25rem;
+  }
+  .col-assign-section.show { display: block; }
+  .col-assign-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+  }
+  .col-assign-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.75rem;
+  }
+  .col-chip {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.65rem 0.85rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .col-chip:hover { border-color: var(--accent); }
+  .col-chip.selected { border-color: var(--accent); background: #fff8f7; }
+  .col-chip-name {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--ink);
+  }
+  .col-chip-type {
+    font-size: 0.65rem;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+  .col-chip-check {
+    width: 16px; height: 16px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.65rem;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  .col-chip.selected .col-chip-check { background: var(--accent); color: white; border-color: var(--accent); }
+
+  /* Send to analysis */
+  .send-section {
+    display: none;
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+  }
+  .send-section.show { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
+  .send-label { font-size: 0.8rem; color: var(--muted); font-family: 'DM Mono', monospace; }
+  .send-select { width: auto; min-width: 200px; }
+
+  /* Raw text paste area */
+  .paste-section { margin-top: 1rem; }
+  .paste-toggle {
+    font-size: 0.75rem;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    text-decoration: underline;
+  }
+  .paste-toggle:hover { color: var(--ink); }
+  .paste-area { display: none; margin-top: 0.6rem; }
+  .paste-area.open { display: block; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">Statistica<span>.</span></div>
+    <div class="logo-sub">Professional Statistical Analysis Suite</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:1rem">
+    <button class="upload-btn-header" onclick="openUploadModal()">
+      <span class="up-icon">⬆</span> Import Data
+    </button>
+    <div class="header-badge">Research Edition v2.0</div>
+  </div>
+</header>
+
+<!-- UPLOAD MODAL -->
+<div class="upload-overlay" id="uploadOverlay" onclick="handleOverlayClick(event)">
+  <div class="upload-modal">
+    <div class="upload-modal-header">
+      <div>
+        <div class="upload-modal-title">Import Data<span>.</span></div>
+        <div style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--warm-mid);margin-top:2px;letter-spacing:0.1em;text-transform:uppercase">CSV · TXT · TSV · Paste</div>
+      </div>
+      <button class="modal-close" onclick="closeUploadModal()">&#x2715;</button>
+    </div>
+    <div class="upload-modal-body">
+      <div class="drop-zone" id="dropZone">
+        <input type="file" id="fileInput" accept=".csv,.txt,.tsv,.dat" onchange="handleFileSelect(event)">
+        <span class="drop-zone-icon">&#128194;</span>
+        <div class="drop-zone-title">Drop your file here or click to browse</div>
+        <div class="drop-zone-sub">Supports CSV &middot; TXT &middot; TSV &middot; DAT</div>
+      </div>
+      <div class="paste-section">
+        <span class="paste-toggle" onclick="togglePaste()">&#9658; Or paste raw data directly</span>
+        <div class="paste-area" id="pasteArea">
+          <textarea id="rawPasteInput" style="min-height:90px;width:100%;margin-top:0.5rem" placeholder="Paste comma/tab/space separated data. First row can be headers.&#10;Example:&#10;Name,Score,Age&#10;Alice,85,24&#10;Bob,92,27"></textarea>
+          <div class="btn-row" style="margin-top:0.5rem">
+            <button class="btn btn-secondary" onclick="parsePastedData()">&#9654; Parse Pasted Data</button>
+          </div>
+        </div>
+      </div>
+      <div class="file-info-bar" id="fileInfoBar">
+        <span>&#10003;</span>
+        <span class="file-info-name" id="fileInfoName"></span>
+        <span class="file-info-meta" id="fileInfoMeta"></span>
+      </div>
+      <div class="parse-options" id="parseOptions">
+        <div class="parse-options-title">Parse Settings</div>
+        <div class="parse-row">
+          <label>Delimiter:</label>
+          <select id="delimSelect" onchange="reparseFile()">
+            <option value="auto">Auto-detect</option>
+            <option value=",">Comma (,)</option>
+            <option value="	">Tab</option>
+            <option value=";">Semicolon (;)</option>
+            <option value=" ">Space</option>
+            <option value="|">Pipe (|)</option>
+          </select>
+          <label style="margin-left:0.75rem"><input type="checkbox" id="headerCheck" checked onchange="reparseFile()"> First row is header</label>
+          <label style="margin-left:0.75rem"><input type="checkbox" id="skipEmptyCheck" checked onchange="reparseFile()"> Skip empty rows</label>
+        </div>
+      </div>
+      <div class="preview-section" id="previewSection">
+        <div class="preview-label">
+          <span>Data Preview</span>
+          <span id="previewMeta" style="color:var(--muted)"></span>
+        </div>
+        <div class="preview-table-wrap">
+          <table class="preview-table" id="previewTable"></table>
+        </div>
+      </div>
+      <div class="col-assign-section" id="colAssignSection">
+        <div class="col-assign-title">Select columns to use &mdash; click to toggle</div>
+        <div class="col-assign-grid" id="colChips"></div>
+      </div>
+      <div class="send-section" id="sendSection">
+        <span class="send-label">Send selected column(s) to:</span>
+        <select class="send-select" id="sendTarget">
+          <optgroup label="Descriptive">
+            <option value="desc-data">Descriptive Statistics</option>
+            <option value="freq-data">Frequency Analysis</option>
+            <option value="norm-data">Normality Tests</option>
+          </optgroup>
+          <optgroup label="T-Tests">
+            <option value="t1-data">One-Sample T (data)</option>
+            <option value="t2-g1">Independent T &mdash; Group 1</option>
+            <option value="t2-g2">Independent T &mdash; Group 2</option>
+            <option value="t3-pre">Paired T &mdash; Pre</option>
+            <option value="t3-post">Paired T &mdash; Post</option>
+          </optgroup>
+          <optgroup label="ANOVA">
+            <option value="anova-g1">ANOVA Group 1</option>
+            <option value="anova-g2">ANOVA Group 2</option>
+            <option value="anova-g3">ANOVA Group 3</option>
+            <option value="anova-g4">ANOVA Group 4</option>
+          </optgroup>
+          <optgroup label="Correlation / Regression">
+            <option value="corr-x">Correlation &mdash; X</option>
+            <option value="corr-y">Correlation &mdash; Y</option>
+            <option value="reg-x">Regression &mdash; X</option>
+            <option value="reg-y">Regression &mdash; Y</option>
+            <option value="sp-x">Spearman &mdash; X</option>
+            <option value="sp-y">Spearman &mdash; Y</option>
+          </optgroup>
+          <optgroup label="Non-Parametric">
+            <option value="mw-g1">Mann-Whitney &mdash; G1</option>
+            <option value="mw-g2">Mann-Whitney &mdash; G2</option>
+            <option value="wil-g1">Wilcoxon &mdash; G1</option>
+            <option value="wil-g2">Wilcoxon &mdash; G2</option>
+            <option value="kw-g1">Kruskal-Wallis &mdash; G1</option>
+            <option value="kw-g2">Kruskal-Wallis &mdash; G2</option>
+            <option value="kw-g3">Kruskal-Wallis &mdash; G3</option>
+          </optgroup>
+          <optgroup label="Confidence Intervals">
+            <option value="ci-data">CI &mdash; Mean (data)</option>
+            <option value="ci-d1">CI &mdash; Diff Means G1</option>
+            <option value="ci-d2">CI &mdash; Diff Means G2</option>
+          </optgroup>
+        </select>
+        <button class="btn btn-primary" onclick="sendToAnalysis()">&#8599; Send Data</button>
+        <button class="btn btn-outline" onclick="sendAllColumns()">&#8599; Send All Columns</button>
+      </div>
+      <div id="uploadStatus" style="margin-top:0.75rem;font-size:0.8rem;font-family:'DM Mono',monospace;color:var(--accent2)"></div>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Navigation</div>
+      <div class="nav-item active" onclick="showPanel('home')">
+        <span class="icon">&#127807;</span> Home &amp; About
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Descriptive</div>
+      <div class="nav-item" onclick="showPanel('descriptive')">
+        <span class="icon">∑</span> Descriptive Statistics
+      </div>
+      <div class="nav-item" onclick="showPanel('frequency')">
+        <span class="icon">▦</span> Frequency Analysis
+      </div>
+      <div class="nav-item" onclick="showPanel('normality')">
+        <span class="icon">⌀</span> Normality Tests
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Inferential</div>
+      <div class="nav-item" onclick="showPanel('ttest')">
+        <span class="icon">t</span> T-Tests
+      </div>
+      <div class="nav-item" onclick="showPanel('anova')">
+        <span class="icon">F</span> ANOVA
+      </div>
+      <div class="nav-item" onclick="showPanel('chisquare')">
+        <span class="icon">χ²</span> Chi-Square Tests
+      </div>
+      <div class="nav-item" onclick="showPanel('ztest')">
+        <span class="icon">Z</span> Z-Test
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Correlation & Regression</div>
+      <div class="nav-item" onclick="showPanel('correlation')">
+        <span class="icon">r</span> Correlation
+      </div>
+      <div class="nav-item" onclick="showPanel('regression')">
+        <span class="icon">β</span> Linear Regression
+      </div>
+      <div class="nav-item" onclick="showPanel('multiregression')">
+        <span class="icon">β²</span> Multiple Regression
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Non-Parametric</div>
+      <div class="nav-item" onclick="showPanel('mannwhitney')">
+        <span class="icon">U</span> Mann-Whitney U
+      </div>
+      <div class="nav-item" onclick="showPanel('wilcoxon')">
+        <span class="icon">W</span> Wilcoxon Signed-Rank
+      </div>
+      <div class="nav-item" onclick="showPanel('kruskal')">
+        <span class="icon">H</span> Kruskal-Wallis
+      </div>
+      <div class="nav-item" onclick="showPanel('spearman')">
+        <span class="icon">ρ</span> Spearman Rank Corr.
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Probability</div>
+      <div class="nav-item" onclick="showPanel('distributions')">
+        <span class="icon">P</span> Distributions
+      </div>
+      <div class="nav-item" onclick="showPanel('confidence')">
+        <span class="icon">CI</span> Confidence Intervals
+      </div>
+      <div class="nav-item" onclick="showPanel('power')">
+        <span class="icon">⚡</span> Power Analysis
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Effect Sizes</div>
+      <div class="nav-item" onclick="showPanel('effectsize')">
+        <span class="icon">d</span> Effect Size Calculator
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main class="main">
+
+
+    <!-- ======================== HOME PAGE ======================== -->
+    <div id="panel-home" class="analysis-panel active">
+
+      <!-- Hero Banner -->
+      <div style="background:linear-gradient(135deg,var(--accent) 0%,#1e4a10 55%,#3d6b1a 100%);border-radius:12px;padding:2.5rem 2rem 2rem;margin-bottom:1.75rem;position:relative;overflow:hidden;">
+        <div style="position:absolute;right:-20px;top:-20px;font-size:9rem;opacity:0.07;line-height:1;user-select:none;">&#127807;</div>
+        <div style="position:absolute;right:60px;bottom:-10px;font-size:6rem;opacity:0.06;user-select:none;">&#127793;</div>
+        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap;">
+          <div style="background:var(--gold);color:var(--ink);border-radius:6px;padding:0.35rem 0.75rem;font-family:'DM Mono',monospace;font-size:0.7rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;">Agri-PBG Edition</div>
+          <div style="background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.75);border-radius:6px;padding:0.35rem 0.75rem;font-family:'DM Mono',monospace;font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;">v2.0 &mdash; UAF</div>
+        </div>
+        <h1 style="font-family:'Playfair Display',serif;font-size:2.4rem;color:white;letter-spacing:-0.02em;line-height:1.15;margin-bottom:0.6rem;">Statistica <span style="color:var(--gold)">for Plant Breeding</span><br><span style="font-size:1.5rem;font-style:italic;opacity:0.85">&amp; Genetics Research</span></h1>
+        <p style="color:rgba(255,255,255,0.78);font-size:0.92rem;line-height:1.65;max-width:620px;">A comprehensive, browser-based statistical analysis suite purpose-built for agricultural scientists, plant breeders, geneticists, and field researchers at universities and research institutes.</p>
+        <div class="btn-row" style="margin-top:1.25rem;">
+          <button class="btn" style="background:var(--gold);color:var(--ink);font-weight:600;" onclick="showPanel('descriptive');document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.querySelectorAll('.nav-item').forEach((n,i)=>{if(i===1)n.classList.add('active')})">&#9654; Start Analyzing</button>
+          <button class="btn btn-outline" style="border-color:rgba(255,255,255,0.3);color:white;" onclick="openUploadModal()">&#8679; Import Data</button>
+        </div>
+      </div>
+
+      <!-- About section -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.5rem;">
+
+        <div style="background:white;border:1px solid var(--border);border-radius:10px;padding:1.4rem;border-top:3px solid var(--accent);">
+          <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--accent);margin-bottom:0.75rem;">&#127807; What is Statistica?</div>
+          <p style="font-size:0.85rem;color:var(--muted);line-height:1.75;">Statistica is a <strong>free, fully offline</strong>, web-based statistical software designed for <strong>plant breeders, agronomists, geneticists</strong>, and agricultural researchers. It runs entirely in your browser &mdash; no installation, no server, no data leaves your computer.</p>
+          <p style="font-size:0.85rem;color:var(--muted);line-height:1.75;margin-top:0.6rem;">Developed under the <strong>Agri-Codex</strong> initiative at the <strong>University of Agriculture, Faisalabad (UAF)</strong>, it covers the full statistical workflow from exploratory data analysis to advanced inferential and non-parametric methods used in peer-reviewed PBG research.</p>
+        </div>
+
+        <div style="background:white;border:1px solid var(--border);border-radius:10px;padding:1.4rem;border-top:3px solid var(--gold);">
+          <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--accent3);margin-bottom:0.75rem;">&#127806; Who Is It For?</div>
+          <ul style="font-size:0.85rem;color:var(--muted);line-height:1.9;padding-left:1.1rem;">
+            <li>Plant Breeders analyzing genotype &times; environment interactions</li>
+            <li>Geneticists studying trait heritability and variance components</li>
+            <li>Agronomists comparing treatment means across field trials</li>
+            <li>MSc / PhD students performing thesis statistical analysis</li>
+            <li>Faculty members teaching applied statistics in agriculture</li>
+            <li>Researchers preparing publications in agricultural journals</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Feature grid -->
+      <div style="margin-bottom:1.5rem;">
+        <div style="font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--ink);margin-bottom:1rem;padding-bottom:0.5rem;border-bottom:2px solid var(--border);">Complete Statistical Toolkit &mdash; 20+ Analyses</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:0.85rem;">
+
+          <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:1rem;">
+            <div style="font-size:1.4rem;margin-bottom:0.4rem;">&#128202;</div>
+            <div style="font-size:0.88rem;font-weight:600;color:var(--ink);margin-bottom:0.3rem;">Descriptive Statistics</div>
+            <div style="font-size:0.78rem;color:var(--muted);line-height:1.6;">Mean, median, mode, SD, variance, SE, CV%, IQR, skewness, kurtosis, five-number summary, 95% confidence intervals</div>
+          </div>
+
+          <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:1rem;">
+            <div style="font-size:1.4rem;margin-bottom:0.4rem;">&#9878;</div>
+            <div style="font-size:0.88rem;font-weight:600;color:var(--ink);margin-bottom:0.3rem;">Normality Testing</div>
+            <div style="font-size:0.78rem;color:var(--muted);line-height:1.6;">Shapiro-Wilk approximation, skewness &amp; kurtosis z-tests, Q-Q plot assessment &mdash; essential before choosing parametric vs non-parametric tests</div>
+          </div>
+
+          <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:1rem;">
+            <div style="font-size:1.4rem;margin-bottom:0.4rem;">&#120263;</div>
+            <div style="font-size:0.88rem;font-weight:600;color:var(--ink);margin-bottom:0.3rem;">T-Tests (3 Types)</div>
+            <div style="font-size:0.78rem;color:var(--muted);line-height:1.6;">One-sample, independent-samples (Welch), and paired t-tests with effect sizes, confidence intervals, and significance decisions</div>
+          </div>
+
+          <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:1rem;">
+            <div style="font-size:1.4rem;margin-bottom:0.4rem;">&#120465;</div>
+            <div style="font-size:0.88rem;font-weight:600;color:var(--ink);margin-bottom:0.3rem;">One-Way ANOVA</div>
+            <div style="font-size:0.78rem;color:var(--muted);line-height:1.6;">Full ANOVA table (SS, df, MS, F, p), eta-squared effect size, group descriptives &mdash; ideal for multi-treatment field trial comparisons</div>
+          </div>
+
+          <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:1rem;">
+            <div style="font-size:1.4rem;margin-bottom:0.4rem;">&#967;&sup2;</div>
+            <div style="font-size:0.88rem;font-weight:600;color:var(--ink);margin-bottom:0.3rem;">Chi-Square Tests</div>
+            <div style="font-size:0.78rem;color:var(--muted);line-height:1.6;">Goodness-of-fit for observed vs expected ratios (Mendelian genetics) and test of independence for contingency tables with Cram&eacute;r&apos;s V</div>
+          </div>
+
+          <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:1rem;">
+            <div style="font-size:1.4rem;margin-bottom:0.4rem;">&#120337;</div>
+            <div style="font-size:0.88rem;font-weight:600;color:var(--ink);margin-bottom:0.3rem;">Pearson Correlation</div>
+            <div style="font-size:0.78rem;color:var(--muted);line-height:1.6;">r, R&sup2;, significance test, Fisher-Z confidence intervals &mdash; study trait associations and phenotypic correlations in breeding lines</div>
+          </div>
+
+          <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:1rem;">
+            <div style="font-size:1.4rem;margin-bottom:0.4rem;">&#120573;</div>
+            <div style="font-size:0.88rem;font-weight:600;color:var(--ink);margin-bottom:0.3rem;">Linear &amp; Multiple Regression</div>
+            <div style="font-size:0.78rem;color:var(--muted);line-height:1.6;">OLS regression with full coefficient table, ANOVA table, R&sup2;, adjusted R&sup2;, RMSE &mdash; supports up to 3 predictors via matrix algebra</div>
+          </div>
+
+          <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:1rem;">
+            <div style="font-size:1.4rem;margin-bottom:0.4rem;">&#128296;</div>
+            <div style="font-size:0.88rem;font-weight:600;color:var(--ink);margin-bottom:0.3rem;">Non-Parametric Tests</div>
+            <div style="font-size:0.78rem;color:var(--muted);line-height:1.6;">Mann-Whitney U, Wilcoxon Signed-Rank, Kruskal-Wallis H, and Spearman Rank Correlation for non-normal or ordinal data</div>
+          </div>
+
+          <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:1rem;">
+            <div style="font-size:1.4rem;margin-bottom:0.4rem;">&#128200;</div>
+            <div style="font-size:0.88rem;font-weight:600;color:var(--ink);margin-bottom:0.3rem;">Probability Distributions</div>
+            <div style="font-size:0.78rem;color:var(--muted);line-height:1.6;">Critical values and probabilities for Normal, t, F, Chi-square, Binomial, and Poisson distributions &mdash; built-in statistical tables</div>
+          </div>
+
+          <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:1rem;">
+            <div style="font-size:1.4rem;margin-bottom:0.4rem;">CI</div>
+            <div style="font-size:0.88rem;font-weight:600;color:var(--ink);margin-bottom:0.3rem;">Confidence Intervals</div>
+            <div style="font-size:0.78rem;color:var(--muted);line-height:1.6;">For means (t-based), proportions (Wald &amp; Wilson), and difference of two means with adjustable confidence levels (80%, 90%, 95%, 99%)</div>
+          </div>
+
+          <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:1rem;">
+            <div style="font-size:1.4rem;margin-bottom:0.4rem;">&#9889;</div>
+            <div style="font-size:0.88rem;font-weight:600;color:var(--ink);margin-bottom:0.3rem;">Power Analysis</div>
+            <div style="font-size:0.78rem;color:var(--muted);line-height:1.6;">Determine required sample size, achieved power, or minimum detectable effect for t-tests, two-sample tests, proportions, and ANOVA</div>
+          </div>
+
+          <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:1rem;">
+            <div style="font-size:1.4rem;margin-bottom:0.4rem;">d</div>
+            <div style="font-size:0.88rem;font-weight:600;color:var(--ink);margin-bottom:0.3rem;">Effect Size Calculator</div>
+            <div style="font-size:0.78rem;color:var(--muted);line-height:1.6;">Cohen&apos;s d, eta-squared (&eta;&sup2;), Cram&eacute;r&apos;s V, r&harr;d conversions, odds ratio to d &mdash; essential for reporting practical significance in publications</div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- How to use -->
+      <div style="background:white;border:1px solid var(--border);border-radius:10px;padding:1.4rem;margin-bottom:1.5rem;border-left:4px solid var(--accent);">
+        <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--accent);margin-bottom:0.9rem;">&#128196; How to Use Statistica</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0.75rem;">
+          <div style="display:flex;gap:0.6rem;align-items:flex-start;">
+            <div style="background:var(--accent);color:white;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:2px;">1</div>
+            <div style="font-size:0.82rem;color:var(--muted);line-height:1.6;"><strong style="color:var(--ink);">Import or Enter Data</strong><br>Click &#8679; Import Data to upload a CSV/TXT file, or paste data directly. Or manually type values in any input field.</div>
+          </div>
+          <div style="display:flex;gap:0.6rem;align-items:flex-start;">
+            <div style="background:var(--accent);color:white;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:2px;">2</div>
+            <div style="font-size:0.82rem;color:var(--muted);line-height:1.6;"><strong style="color:var(--ink);">Select Your Test</strong><br>Navigate the left sidebar to choose the appropriate statistical test based on your research question and data type.</div>
+          </div>
+          <div style="display:flex;gap:0.6rem;align-items:flex-start;">
+            <div style="background:var(--accent);color:white;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:2px;">3</div>
+            <div style="font-size:0.82rem;color:var(--muted);line-height:1.6;"><strong style="color:var(--ink);">Configure &amp; Run</strong><br>Set parameters (alpha level, tails, group labels), then click the green &#9654; Analyze / Run Test button.</div>
+          </div>
+          <div style="display:flex;gap:0.6rem;align-items:flex-start;">
+            <div style="background:var(--accent);color:white;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:2px;">4</div>
+            <div style="font-size:0.82rem;color:var(--muted);line-height:1.6;"><strong style="color:var(--ink);">Interpret Results</strong><br>Results include test statistics, p-values, effect sizes, CIs, and a plain-language decision with significance verdict.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data privacy + limitations -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.5rem;">
+        <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:1.1rem;">
+          <div style="font-size:0.88rem;font-weight:600;color:#166534;margin-bottom:0.5rem;">&#128274; 100% Private &amp; Offline</div>
+          <p style="font-size:0.8rem;color:#15803d;line-height:1.65;">All calculations happen inside your browser using JavaScript. <strong>No data is uploaded, stored, or transmitted</strong> to any server. Your research data remains completely confidential &mdash; safe for unpublished trial data.</p>
+        </div>
+        <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:1.1rem;">
+          <div style="font-size:0.88rem;font-weight:600;color:#92400e;margin-bottom:0.5rem;">&#9888; Scope &amp; Limitations</div>
+          <p style="font-size:0.8rem;color:#a16207;line-height:1.65;">Currently supports univariate and bivariate analyses. Multi-factor ANOVA (factorial, split-plot, RCBD) and GxE analysis are planned for the next version. For complex mixed-model analyses, R or SAS remains recommended.</p>
+        </div>
+      </div>
+
+      <!-- Citation box -->
+      <div style="background:var(--result-bg);border-radius:8px;padding:1.25rem;margin-bottom:0.5rem;">
+        <div style="font-family:'DM Mono',monospace;font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:#6a9a5a;margin-bottom:0.6rem;">Suggested Citation</div>
+        <div style="font-family:'DM Mono',monospace;font-size:0.78rem;color:var(--result-text);line-height:1.8;">Agri-Codex. (2025). <em style="color:var(--result-yellow);">Statistica: Professional Statistical Analysis Suite for Agricultural Research</em> (v2.0). University of Agriculture, Faisalabad. Available at: [this tool]</div>
+      </div>
+
+    </div>
+
+    <!-- ======================== DESCRIPTIVE ======================== -->
+    <div id="panel-descriptive" class="analysis-panel">
+      <div class="panel-header">
+        <div class="panel-title">Descriptive Statistics</div>
+        <div class="panel-desc">Complete summary statistics including measures of central tendency, dispersion, and distribution shape.</div>
+      </div>
+      <div class="input-section">
+        <label class="input-label">Data Values</label>
+        <textarea id="desc-data" placeholder="Enter numbers separated by commas or new lines&#10;Example: 23, 45, 12, 67, 34, 89, 56, 41, 28, 73"></textarea>
+        <div class="input-hint">→ Accepts comma-separated, space-separated, or line-by-line values</div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="runDescriptive()">▶ Analyze</button>
+          <button class="btn btn-outline" onclick="loadSample('desc-data','12,15,14,10,13,15,16,12,13,14,15,11,12,13,16,14,15,12,13,14')">Load Sample</button>
+          <button class="btn btn-outline" onclick="clearField('desc-data','desc-results')">Clear</button>
+        </div>
+      </div>
+      <div id="desc-results" class="results-container"></div>
+      <div id="desc-chart" class="chart-area"><canvas id="desc-canvas"></canvas></div>
+    </div>
+
+    <!-- ======================== FREQUENCY ======================== -->
+    <div id="panel-frequency" class="analysis-panel">
+      <div class="panel-header">
+        <div class="panel-title">Frequency Analysis</div>
+        <div class="panel-desc">Frequency distribution table with relative frequencies, cumulative frequencies, and percentages.</div>
+      </div>
+      <div class="input-section">
+        <label class="input-label">Data Values</label>
+        <textarea id="freq-data" placeholder="Enter categorical or numeric data&#10;Example: A, B, A, C, B, A, B, C, A, B"></textarea>
+        <div class="input-hint">→ Works with both categorical and numeric data</div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="runFrequency()">▶ Analyze</button>
+          <button class="btn btn-outline" onclick="loadSample('freq-data','Male,Female,Female,Male,Male,Female,Male,Female,Male,Female,Female,Male,Female,Female,Male')">Load Sample</button>
+          <button class="btn btn-outline" onclick="clearField('freq-data','freq-results')">Clear</button>
+        </div>
+      </div>
+      <div id="freq-results" class="results-container"></div>
+    </div>
+
+    <!-- ======================== NORMALITY ======================== -->
+    <div id="panel-normality" class="analysis-panel">
+      <div class="panel-header">
+        <div class="panel-title">Normality Tests</div>
+        <div class="panel-desc">Shapiro-Wilk approximation, Kolmogorov-Smirnov, skewness/kurtosis tests, and Q-Q plot assessment.</div>
+      </div>
+      <div class="input-section">
+        <label class="input-label">Data Values</label>
+        <textarea id="norm-data" placeholder="Enter numeric data values"></textarea>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="runNormality()">▶ Test Normality</button>
+          <button class="btn btn-outline" onclick="loadSample('norm-data','2.1,2.5,2.3,2.7,2.2,2.4,2.6,2.3,2.5,2.4,2.2,2.8,2.1,2.6,2.3,2.5,2.4,2.3,2.6,2.5')">Load Normal Sample</button>
+          <button class="btn btn-outline" onclick="clearField('norm-data','norm-results')">Clear</button>
+        </div>
+      </div>
+      <div id="norm-results" class="results-container"></div>
+    </div>
+
+    <!-- ======================== T-TESTS ======================== -->
+    <div id="panel-ttest" class="analysis-panel">
+      <div class="panel-header">
+        <div class="panel-title">T-Tests</div>
+        <div class="panel-desc">One-sample, independent samples, and paired samples t-tests with effect sizes and confidence intervals.</div>
+      </div>
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('ttest','one')">One-Sample</div>
+        <div class="tab" onclick="switchTab('ttest','indep')">Independent Samples</div>
+        <div class="tab" onclick="switchTab('ttest','paired')">Paired Samples</div>
+      </div>
+
+      <div id="ttest-tab-one" class="tab-panel active">
+        <div class="input-section">
+          <div class="input-grid">
+            <div class="input-group">
+              <label class="input-label">Sample Data</label>
+              <textarea id="t1-data" style="min-height:60px" placeholder="Values, comma-separated"></textarea>
+            </div>
+            <div class="input-group">
+              <label class="input-label">Population Mean (μ₀)</label>
+              <input type="number" id="t1-mu" placeholder="e.g. 100" value="0">
+              <label class="input-label" style="margin-top:0.5rem">Alpha (α)</label>
+              <select id="t1-alpha">
+                <option value="0.05" selected>0.05</option>
+                <option value="0.01">0.01</option>
+                <option value="0.001">0.001</option>
+                <option value="0.10">0.10</option>
+              </select>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="runOneSampleT()">▶ Run Test</button>
+            <button class="btn btn-outline" onclick="loadSample('t1-data','102,98,105,110,95,108,101,99,107,103,96,112,104,98,101')">Sample</button>
+          </div>
+        </div>
+        <div id="t1-results" class="results-container"></div>
+      </div>
+
+      <div id="ttest-tab-indep" class="tab-panel">
+        <div class="input-section">
+          <div class="input-grid">
+            <div class="input-group">
+              <label class="input-label">Group 1</label>
+              <textarea id="t2-g1" style="min-height:60px" placeholder="Values, comma-separated"></textarea>
+            </div>
+            <div class="input-group">
+              <label class="input-label">Group 2</label>
+              <textarea id="t2-g2" style="min-height:60px" placeholder="Values, comma-separated"></textarea>
+            </div>
+          </div>
+          <div class="input-grid">
+            <div class="input-group">
+              <label class="input-label">Alpha (α)</label>
+              <select id="t2-alpha">
+                <option value="0.05" selected>0.05</option>
+                <option value="0.01">0.01</option>
+                <option value="0.001">0.001</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label class="input-label">Tail</label>
+              <select id="t2-tail">
+                <option value="two">Two-tailed</option>
+                <option value="left">One-tailed (left)</option>
+                <option value="right">One-tailed (right)</option>
+              </select>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="runIndepT()">▶ Run Test</button>
+            <button class="btn btn-outline" onclick="(()=>{loadSample('t2-g1','85,88,92,90,87,91,89,93,86,90');loadSample('t2-g2','78,82,79,85,81,80,83,77,84,79')})()">Sample</button>
+          </div>
+        </div>
+        <div id="t2-results" class="results-container"></div>
+      </div>
+
+      <div id="ttest-tab-paired" class="tab-panel">
+        <div class="input-section">
+          <div class="input-grid">
+            <div class="input-group">
+              <label class="input-label">Pre / Condition 1</label>
+              <textarea id="t3-pre" style="min-height:60px" placeholder="Values, comma-separated"></textarea>
+            </div>
+            <div class="input-group">
+              <label class="input-label">Post / Condition 2</label>
+              <textarea id="t3-post" style="min-height:60px" placeholder="Values, comma-separated"></textarea>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="runPairedT()">▶ Run Test</button>
+            <button class="btn btn-outline" onclick="(()=>{loadSample('t3-pre','70,65,72,68,74,69,71,67,73,66');loadSample('t3-post','75,70,78,73,80,74,77,71,79,70')})()">Sample</button>
+          </div>
+        </div>
+        <div id="t3-results" class="results-container"></div>
+      </div>
+    </div>
+
+    <!-- ======================== ANOVA ======================== -->
+    <div id="panel-anova" class="analysis-panel">
+      <div class="panel-header">
+        <div class="panel-title">One-Way ANOVA</div>
+        <div class="panel-desc">Analysis of Variance with F-statistic, eta-squared effect size, and post-hoc interpretation.</div>
+      </div>
+      <div class="input-section">
+        <div id="anova-groups">
+          <div class="input-grid">
+            <div class="input-group">
+              <label class="input-label">Group 1</label>
+              <textarea id="anova-g1" style="min-height:55px" placeholder="Values, comma-separated"></textarea>
+            </div>
+            <div class="input-group">
+              <label class="input-label">Group 2</label>
+              <textarea id="anova-g2" style="min-height:55px" placeholder="Values, comma-separated"></textarea>
+            </div>
+            <div class="input-group">
+              <label class="input-label">Group 3</label>
+              <textarea id="anova-g3" style="min-height:55px" placeholder="Values, comma-separated"></textarea>
+            </div>
+            <div class="input-group">
+              <label class="input-label">Group 4 (optional)</label>
+              <textarea id="anova-g4" style="min-height:55px" placeholder="Values, comma-separated"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="runANOVA()">▶ Run ANOVA</button>
+          <button class="btn btn-outline" onclick="(()=>{loadSample('anova-g1','23,25,28,22,26');loadSample('anova-g2','31,33,30,35,32');loadSample('anova-g3','18,20,22,19,21')})()">Sample</button>
+          <button class="btn btn-outline" onclick="clearANOVA()">Clear</button>
+        </div>
+      </div>
+      <div id="anova-results" class="results-container"></div>
+    </div>
+
+    <!-- ======================== CHI SQUARE ======================== -->
+    <div id="panel-chisquare" class="analysis-panel">
+      <div class="panel-header">
+        <div class="panel-title">Chi-Square Tests</div>
+        <div class="panel-desc">Goodness-of-fit and test of independence (contingency tables) with Cramér's V effect size.</div>
+      </div>
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('chi','gof')">Goodness-of-Fit</div>
+        <div class="tab" onclick="switchTab('chi','indep')">Test of Independence</div>
+      </div>
+
+      <div id="chi-tab-gof" class="tab-panel active">
+        <div class="input-section">
+          <div class="input-grid">
+            <div class="input-group">
+              <label class="input-label">Observed Frequencies</label>
+              <input type="text" id="chi-obs" placeholder="e.g. 30, 25, 45">
+            </div>
+            <div class="input-group">
+              <label class="input-label">Expected Frequencies (or leave blank for equal)</label>
+              <input type="text" id="chi-exp" placeholder="e.g. 33.3, 33.3, 33.3">
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="runChiGOF()">▶ Run Test</button>
+            <button class="btn btn-outline" onclick="document.getElementById('chi-obs').value='28,42,30';document.getElementById('chi-exp').value=''">Sample</button>
+          </div>
+        </div>
+        <div id="chi1-results" class="results-container"></div>
+      </div>
+
+      <div id="chi-tab-indep" class="tab-panel">
+        <div class="input-section">
+          <label class="input-label">Contingency Table (rows = groups, pipe | separates rows)</label>
+          <textarea id="chi-table" placeholder="Enter row by row, values comma-separated, rows separated by | or new line&#10;Example: 30,20 | 15,35"></textarea>
+          <div class="input-hint">→ Example 2×2: 30,20 | 15,35 — Example 2×3: 10,20,30 | 40,30,20</div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="runChiIndep()">▶ Run Test</button>
+            <button class="btn btn-outline" onclick="document.getElementById('chi-table').value='30,20\n15,35'">Sample</button>
+          </div>
+        </div>
+        <div id="chi2-results" class="results-container"></div>
+      </div>
+    </div>
+
+    <!-- ======================== Z-TEST ======================== -->
+    <div id="panel-ztest" class="analysis-panel">
+      <div class="panel-header">
+        <div class="panel-title">Z-Test</div>
+        <div class="panel-desc">One-sample and two-sample z-tests for population means when population variance is known.</div>
+      </div>
+      <div class="input-section">
+        <div class="input-grid">
+          <div class="input-group">
+            <label class="input-label">Sample Mean (x̄)</label>
+            <input type="number" id="z-mean" placeholder="e.g. 52">
+          </div>
+          <div class="input-group">
+            <label class="input-label">Population Mean (μ)</label>
+            <input type="number" id="z-mu" placeholder="e.g. 50">
+          </div>
+          <div class="input-group">
+            <label class="input-label">Population Std Dev (σ)</label>
+            <input type="number" id="z-sigma" placeholder="e.g. 10">
+          </div>
+          <div class="input-group">
+            <label class="input-label">Sample Size (n)</label>
+            <input type="number" id="z-n" placeholder="e.g. 30">
+          </div>
+          <div class="input-group">
+            <label class="input-label">Alpha (α)</label>
+            <select id="z-alpha">
+              <option value="0.05" selected>0.05</option>
+              <option value="0.01">0.01</option>
+              <option value="0.001">0.001</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label class="input-label">Tail</label>
+            <select id="z-tail">
+              <option value="two">Two-tailed</option>
+              <option value="left">One-tailed (left)</option>
+              <option value="right">One-tailed (right)</option>
+            </select>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="runZTest()">▶ Run Z-Test</button>
+          <button class="btn btn-outline" onclick="loadZSample()">Load Sample</button>
+        </div>
+      </div>
+      <div id="z-results" class="results-container"></div>
+    </div>
+
+    <!-- ======================== CORRELATION ======================== -->
+    <div id="panel-correlation" class="analysis-panel">
+      <div class="panel-header">
+        <div class="panel-title">Pearson Correlation</div>
+        <div class="panel-desc">Pearson's r with significance testing, R², confidence intervals, and scatter plot visualization.</div>
+      </div>
+      <div class="input-section">
+        <div class="input-grid">
+          <div class="input-group">
+            <label class="input-label">Variable X</label>
+            <textarea id="corr-x" style="min-height:65px" placeholder="Values, comma-separated"></textarea>
+          </div>
+          <div class="input-group">
+            <label class="input-label">Variable Y</label>
+            <textarea id="corr-y" style="min-height:65px" placeholder="Values, comma-separated"></textarea>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="runCorrelation()">▶ Analyze</button>
+          <button class="btn btn-outline" onclick="(()=>{loadSample('corr-x','2,4,6,8,10,12,14,16,18,20');loadSample('corr-y','3,6,5,9,11,10,15,14,18,19')})()">Sample</button>
+          <button class="btn btn-outline" onclick="clearField('corr-x','corr-results');clearField('corr-y','corr-results')">Clear</button>
+        </div>
+      </div>
+      <div id="corr-results" class="results-container"></div>
+    </div>
+
+    <!-- ======================== REGRESSION ======================== -->
+    <div id="panel-regression" class="analysis-panel">
+      <div class="panel-header">
+        <div class="panel-title">Simple Linear Regression</div>
+        <div class="panel-desc">OLS regression with coefficients, R², F-test, ANOVA table, residuals, and prediction.</div>
+      </div>
+      <div class="input-section">
+        <div class="input-grid">
+          <div class="input-group">
+            <label class="input-label">Predictor X (independent)</label>
+            <textarea id="reg-x" style="min-height:65px" placeholder="Values, comma-separated"></textarea>
+          </div>
+          <div class="input-group">
+            <label class="input-label">Response Y (dependent)</label>
+            <textarea id="reg-y" style="min-height:65px" placeholder="Values, comma-separated"></textarea>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="runRegression()">▶ Fit Model</button>
+          <button class="btn btn-outline" onclick="(()=>{loadSample('reg-x','1,2,3,4,5,6,7,8,9,10');loadSample('reg-y','2.1,3.9,6.2,7.8,10.1,11.9,14.2,15.8,18.1,20.2')})()">Sample</button>
+          <button class="btn btn-outline" onclick="clearField('reg-x','reg-results');clearField('reg-y','reg-results')">Clear</button>
+        </div>
+      </div>
+      <div id="reg-results" class="results-container"></div>
+    </div>
+
+    <!-- ======================== MULTIPLE REGRESSION ======================== -->
+    <div id="panel-multiregression" class="analysis-panel">
+      <div class="panel-header">
+        <div class="panel-title">Multiple Linear Regression</div>
+        <div class="panel-desc">OLS with multiple predictors. Enter Y first, then X1, X2, X3... (one variable per line).</div>
+      </div>
+      <div class="input-section">
+        <div class="input-group" style="margin-bottom:0.75rem">
+          <label class="input-label">Y (Dependent variable — one row)</label>
+          <input type="text" id="mreg-y" placeholder="e.g. 12,15,14,18,20,22,19,25,23,28">
+        </div>
+        <div class="input-group" style="margin-bottom:0.75rem">
+          <label class="input-label">X1</label>
+          <input type="text" id="mreg-x1" placeholder="e.g. 2,3,3,4,5,5,4,6,6,7">
+        </div>
+        <div class="input-group" style="margin-bottom:0.75rem">
+          <label class="input-label">X2</label>
+          <input type="text" id="mreg-x2" placeholder="e.g. 1,1,2,2,1,3,2,2,3,3">
+        </div>
+        <div class="input-group" style="margin-bottom:0.75rem">
+          <label class="input-label">X3 (optional)</label>
+          <input type="text" id="mreg-x3" placeholder="e.g. 5,6,5,7,8,7,6,9,8,10">
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="runMultipleRegression()">▶ Fit Model</button>
+          <button class="btn btn-outline" onclick="loadMRegSample()">Sample</button>
+        </div>
+      </div>
+      <div id="mreg-results" class="results-container"></div>
+    </div>
+
+    <!-- ======================== MANN-WHITNEY ======================== -->
+    <div id="panel-mannwhitney" class="analysis-panel">
+      <div class="panel-header">
+        <div class="panel-title">Mann-Whitney U Test</div>
+        <div class="panel-desc">Non-parametric alternative to the independent samples t-test. Tests whether two groups are from the same population.</div>
+      </div>
+      <div class="input-section">
+        <div class="input-grid">
+          <div class="input-group">
+            <label class="input-label">Group 1</label>
+            <textarea id="mw-g1" style="min-height:65px" placeholder="Values, comma-separated"></textarea>
+          </div>
+          <div class="input-group">
+            <label class="input-label">Group 2</label>
+            <textarea id="mw-g2" style="min-height:65px" placeholder="Values, comma-separated"></textarea>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="runMannWhitney()">▶ Run Test</button>
+          <button class="btn btn-outline" onclick="(()=>{loadSample('mw-g1','3,6,8,9,4,7,5');loadSample('mw-g2','10,13,12,15,11,14,9')})()">Sample</button>
+        </div>
+      </div>
+      <div id="mw-results" class="results-container"></div>
+    </div>
+
+    <!-- ======================== WILCOXON ======================== -->
+    <div id="panel-wilcoxon" class="analysis-panel">
+      <div class="panel-header">
+        <div class="panel-title">Wilcoxon Signed-Rank Test</div>
+        <div class="panel-desc">Non-parametric paired test. Alternative to the paired t-test for non-normal distributions.</div>
+      </div>
+      <div class="input-section">
+        <div class="input-grid">
+          <div class="input-group">
+            <label class="input-label">Group 1 / Pre</label>
+            <textarea id="wil-g1" style="min-height:65px" placeholder="Values, comma-separated"></textarea>
+          </div>
+          <div class="input-group">
+            <label class="input-label">Group 2 / Post</label>
+            <textarea id="wil-g2" style="min-height:65px" placeholder="Values, comma-separated"></textarea>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="runWilcoxon()">▶ Run Test</button>
+          <button class="btn btn-outline" onclick="(()=>{loadSample('wil-g1','125,115,130,140,140,115,140,125,140,135');loadSample('wil-g2','110,122,125,120,140,124,123,137,135,145')})()">Sample</button>
+        </div>
+      </div>
+      <div id="wil-results" class="results-container"></div>
+    </div>
+
+    <!-- ======================== KRUSKAL-WALLIS ======================== -->
+    <div id="panel-kruskal" class="analysis-panel">
+      <div class="panel-header">
+        <div class="panel-title">Kruskal-Wallis Test</div>
+        <div class="panel-desc">Non-parametric one-way ANOVA alternative. Tests whether samples come from the same distribution.</div>
+      </div>
+      <div class="input-section">
+        <div class="input-grid">
+          <div class="input-group">
+            <label class="input-label">Group 1</label>
+            <textarea id="kw-g1" style="min-height:55px" placeholder="Values"></textarea>
+          </div>
+          <div class="input-group">
+            <label class="input-label">Group 2</label>
+            <textarea id="kw-g2" style="min-height:55px" placeholder="Values"></textarea>
+          </div>
+          <div class="input-group">
+            <label class="input-label">Group 3</label>
+            <textarea id="kw-g3" style="min-height:55px" placeholder="Values"></textarea>
+          </div>
+          <div class="input-group">
+            <label class="input-label">Group 4 (optional)</label>
+            <textarea id="kw-g4" style="min-height:55px" placeholder="Values"></textarea>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="runKruskal()">▶ Run Test</button>
+          <button class="btn btn-outline" onclick="(()=>{loadSample('kw-g1','5,4,4,3,2');loadSample('kw-g2','6,6,7,5,6');loadSample('kw-g3','8,9,10,8,9')})()">Sample</button>
+        </div>
+      </div>
+      <div id="kw-results" class="results-container"></div>
+    </div>
+
+    <!-- ======================== SPEARMAN ======================== -->
+    <div id="panel-spearman" class="analysis-panel">
+      <div class="panel-header">
+        <div class="panel-title">Spearman Rank Correlation</div>
+        <div class="panel-desc">Non-parametric measure of monotonic association. Robust to outliers and non-normal data.</div>
+      </div>
+      <div class="input-section">
+        <div class="input-grid">
+          <div class="input-group">
+            <label class="input-label">Variable X</label>
+            <textarea id="sp-x" style="min-height:65px" placeholder="Values, comma-separated"></textarea>
+          </div>
+          <div class="input-group">
+            <label class="input-label">Variable Y</label>
+            <textarea id="sp-y" style="min-height:65px" placeholder="Values, comma-separated"></textarea>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="runSpearman()">▶ Analyze</button>
+          <button class="btn btn-outline" onclick="(()=>{loadSample('sp-x','56,75,45,71,62,64,58,80,76,61');loadSample('sp-y','66,70,40,60,65,56,59,77,67,63')})()">Sample</button>
+        </div>
+      </div>
+      <div id="sp-results" class="results-container"></div>
+    </div>
+
+    <!-- ======================== DISTRIBUTIONS ======================== -->
+    <div id="panel-distributions" class="analysis-panel">
+      <div class="panel-header">
+        <div class="panel-title">Probability Distributions</div>
+        <div class="panel-desc">Calculate probabilities, quantiles, and critical values for common distributions.</div>
+      </div>
+      <div class="input-section">
+        <div class="input-grid">
+          <div class="input-group">
+            <label class="input-label">Distribution</label>
+            <select id="dist-type" onchange="updateDistParams()">
+              <option value="normal">Normal (Z)</option>
+              <option value="t">Student's t</option>
+              <option value="f">F Distribution</option>
+              <option value="chi2">Chi-Square</option>
+              <option value="binomial">Binomial</option>
+              <option value="poisson">Poisson</option>
+            </select>
+          </div>
+          <div id="dist-params"></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="calcDistribution()">▶ Calculate</button>
+        </div>
+      </div>
+      <div id="dist-results" class="results-container"></div>
+    </div>
+
+    <!-- ======================== CONFIDENCE INTERVALS ======================== -->
+    <div id="panel-confidence" class="analysis-panel">
+      <div class="panel-header">
+        <div class="panel-title">Confidence Intervals</div>
+        <div class="panel-desc">Compute confidence intervals for means, proportions, and differences between groups.</div>
+      </div>
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('ci','mean')">Mean</div>
+        <div class="tab" onclick="switchTab('ci','prop')">Proportion</div>
+        <div class="tab" onclick="switchTab('ci','diff')">Difference of Means</div>
+      </div>
+      <div id="ci-tab-mean" class="tab-panel active">
+        <div class="input-section">
+          <label class="input-label">Data or Summary Statistics</label>
+          <textarea id="ci-data" placeholder="Enter raw data OR"></textarea>
+          <div class="input-grid" style="margin-top:0.75rem">
+            <div class="input-group">
+              <label class="input-label">OR: Mean</label>
+              <input type="number" id="ci-mean" placeholder="x̄">
+            </div>
+            <div class="input-group">
+              <label class="input-label">Std Dev</label>
+              <input type="number" id="ci-sd" placeholder="s">
+            </div>
+            <div class="input-group">
+              <label class="input-label">n</label>
+              <input type="number" id="ci-n" placeholder="sample size">
+            </div>
+            <div class="input-group">
+              <label class="input-label">Confidence Level</label>
+              <select id="ci-level">
+                <option>99</option>
+                <option selected>95</option>
+                <option>90</option>
+                <option>80</option>
+              </select>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="runCI_mean()">▶ Calculate CI</button>
+            <button class="btn btn-outline" onclick="loadSample('ci-data','23,25,22,28,26,24,27,23,25,26,24,22,28,25,26')">Sample</button>
+          </div>
+        </div>
+        <div id="ci-mean-results" class="results-container"></div>
+      </div>
+
+      <div id="ci-tab-prop" class="tab-panel">
+        <div class="input-section">
+          <div class="input-grid">
+            <div class="input-group">
+              <label class="input-label">Successes (x)</label>
+              <input type="number" id="ci-px" placeholder="e.g. 45">
+            </div>
+            <div class="input-group">
+              <label class="input-label">Sample Size (n)</label>
+              <input type="number" id="ci-pn" placeholder="e.g. 100">
+            </div>
+            <div class="input-group">
+              <label class="input-label">Confidence Level</label>
+              <select id="ci-plevel">
+                <option>99</option><option selected>95</option><option>90</option>
+              </select>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="runCI_prop()">▶ Calculate CI</button>
+          </div>
+        </div>
+        <div id="ci-prop-results" class="results-container"></div>
+      </div>
+
+      <div id="ci-tab-diff" class="tab-panel">
+        <div class="input-section">
+          <div class="input-grid">
+            <div class="input-group">
+              <label class="input-label">Group 1 Data</label>
+              <textarea id="ci-d1" style="min-height:55px" placeholder="Values"></textarea>
+            </div>
+            <div class="input-group">
+              <label class="input-label">Group 2 Data</label>
+              <textarea id="ci-d2" style="min-height:55px" placeholder="Values"></textarea>
+            </div>
+          </div>
+          <div class="input-group" style="max-width:200px">
+            <label class="input-label">Confidence Level</label>
+            <select id="ci-dlevel">
+              <option>99</option><option selected>95</option><option>90</option>
+            </select>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="runCI_diff()">▶ Calculate CI</button>
+            <button class="btn btn-outline" onclick="(()=>{loadSample('ci-d1','85,88,92,90,87,91');loadSample('ci-d2','78,82,79,85,81,80')})()">Sample</button>
+          </div>
+        </div>
+        <div id="ci-diff-results" class="results-container"></div>
+      </div>
+    </div>
+
+    <!-- ======================== POWER ANALYSIS ======================== -->
+    <div id="panel-power" class="analysis-panel">
+      <div class="panel-header">
+        <div class="panel-title">Power Analysis & Sample Size</div>
+        <div class="panel-desc">Calculate required sample size, statistical power, or minimum detectable effect for your study design.</div>
+      </div>
+      <div class="input-section">
+        <div class="input-grid">
+          <div class="input-group">
+            <label class="input-label">Test Type</label>
+            <select id="pwr-test">
+              <option value="ttest">One-Sample / Paired t-Test</option>
+              <option value="ttest2">Two-Sample t-Test</option>
+              <option value="prop">Proportion Test</option>
+              <option value="anova">One-Way ANOVA</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label class="input-label">Solve For</label>
+            <select id="pwr-solve">
+              <option value="n">Sample Size (n)</option>
+              <option value="power">Power (1-β)</option>
+              <option value="effect">Effect Size</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label class="input-label">Effect Size (Cohen's d / f / w)</label>
+            <input type="number" id="pwr-effect" placeholder="e.g. 0.5 (medium)" step="0.01" value="0.5">
+          </div>
+          <div class="input-group">
+            <label class="input-label">Alpha (α)</label>
+            <select id="pwr-alpha">
+              <option value="0.05" selected>0.05</option>
+              <option value="0.01">0.01</option>
+              <option value="0.001">0.001</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label class="input-label">Power (1-β)</label>
+            <input type="number" id="pwr-power" placeholder="e.g. 0.80" step="0.01" value="0.80">
+          </div>
+          <div class="input-group">
+            <label class="input-label">Sample Size (n) per group</label>
+            <input type="number" id="pwr-n" placeholder="e.g. 30">
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="runPowerAnalysis()">▶ Calculate</button>
+        </div>
+      </div>
+      <div id="pwr-results" class="results-container"></div>
+    </div>
+
+    <!-- ======================== EFFECT SIZE ======================== -->
+    <div id="panel-effectsize" class="analysis-panel">
+      <div class="panel-header">
+        <div class="panel-title">Effect Size Calculator</div>
+        <div class="panel-desc">Compute Cohen's d, r, η², Cramér's V, and other standardized effect size measures.</div>
+      </div>
+      <div class="input-section">
+        <div class="input-grid">
+          <div class="input-group">
+            <label class="input-label">Effect Type</label>
+            <select id="es-type" onchange="updateESFields()">
+              <option value="cohens_d">Cohen's d (two groups)</option>
+              <option value="cohens_d1">Cohen's d (one sample vs μ)</option>
+              <option value="eta2">Eta-squared (η²)</option>
+              <option value="r_to_d">r → d Conversion</option>
+              <option value="d_to_r">d → r Conversion</option>
+              <option value="cramers_v">Cramér's V</option>
+              <option value="odds">Odds Ratio → d</option>
+            </select>
+          </div>
+        </div>
+        <div id="es-fields"></div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="runEffectSize()">▶ Calculate</button>
+        </div>
+      </div>
+      <div id="es-results" class="results-container"></div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ============================================================
+// UTILITY FUNCTIONS
+// ============================================================
+function parseData(str) {
+  return str.split(/[\s,;\n\t]+/).map(s=>s.trim()).filter(s=>s!=='').map(Number).filter(v=>!isNaN(v));
+}
+
+function parseText(str) {
+  return str.split(/[\s,;\n]+/).map(s=>s.trim()).filter(s=>s!=='');
+}
+
+function mean(arr) {
+  return arr.reduce((a,b)=>a+b,0)/arr.length;
+}
+
+function variance(arr, sample=true) {
+  const m = mean(arr);
+  const ss = arr.reduce((a,b)=>a+(b-m)**2,0);
+  return ss/(sample ? arr.length-1 : arr.length);
+}
+
+function std(arr, sample=true) {
+  return Math.sqrt(variance(arr, sample));
+}
+
+function median(arr) {
+  const s=[...arr].sort((a,b)=>a-b);
+  const m=Math.floor(s.length/2);
+  return s.length%2 ? s[m] : (s[m-1]+s[m])/2;
+}
+
+function mode(arr) {
+  const freq={};
+  arr.forEach(v=>freq[v]=(freq[v]||0)+1);
+  const max=Math.max(...Object.values(freq));
+  return Object.keys(freq).filter(k=>freq[k]===max).map(Number);
+}
+
+function skewness(arr) {
+  const m=mean(arr), s=std(arr), n=arr.length;
+  return (n/((n-1)*(n-2)))*arr.reduce((a,b)=>a+((b-m)/s)**3,0);
+}
+
+function kurtosis(arr) {
+  const m=mean(arr), s=std(arr), n=arr.length;
+  const k=arr.reduce((a,b)=>a+((b-m)/s)**4,0)/n;
+  return k - 3; // excess kurtosis
+}
+
+function percentile(arr, p) {
+  const s=[...arr].sort((a,b)=>a-b);
+  const idx=p/100*(s.length-1);
+  const lo=Math.floor(idx), hi=Math.ceil(idx);
+  return s[lo]+(s[hi]-s[lo])*(idx-lo);
+}
+
+// Normal distribution CDF (Abramowitz and Stegun approximation)
+function normalCDF(x) {
+  const t=1/(1+0.2316419*Math.abs(x));
+  const poly=t*(0.319381530+t*(-0.356563782+t*(1.781477937+t*(-1.821255978+t*1.330274429))));
+  const p=1-0.398942280*Math.exp(-0.5*x*x)*poly;
+  return x>=0?p:1-p;
+}
+
+function normalInv(p) {
+  // Rational approximation
+  function rationalApprox(t) {
+    const c=[2.515517,0.802853,0.010328];
+    const d=[1.432788,0.189269,0.001308];
+    return t-(c[0]+c[1]*t+c[2]*t*t)/(1+d[0]*t+d[1]*t*t+d[2]*t*t*t);
+  }
+  if(p<=0||p>=1) return NaN;
+  if(p<0.5) return -rationalApprox(Math.sqrt(-2*Math.log(p)));
+  return rationalApprox(Math.sqrt(-2*Math.log(1-p)));
+}
+
+// t-distribution (approximation)
+function tCDF(t, df) {
+  // Wilson-Hilferty approximation
+  const x = df/(df+t*t);
+  return 1-0.5*incompleteBeta(x,df/2,0.5);
+}
+
+function incompleteBeta(x, a, b) {
+  // Simple approximation using continued fraction
+  if(x<0||x>1) return NaN;
+  if(x===0) return 0;
+  if(x===1) return 1;
+  const lbeta = lgamma(a)+lgamma(b)-lgamma(a+b);
+  const front = Math.exp(Math.log(x)*a+Math.log(1-x)*b-lbeta)/a;
+  return front*betaCF(x,a,b);
+}
+
+function betaCF(x,a,b) {
+  const MAXIT=100, EPS=3e-7, FPMIN=1e-30;
+  const qab=a+b, qap=a+1, qam=a-1;
+  let c=1, d=1-qab*x/qap;
+  if(Math.abs(d)<FPMIN) d=FPMIN;
+  d=1/d; let h=d;
+  for(let m=1;m<=MAXIT;m++) {
+    const m2=2*m;
+    let aa=m*(b-m)*x/((qam+m2)*(a+m2));
+    d=1+aa*d; if(Math.abs(d)<FPMIN) d=FPMIN;
+    c=1+aa/c; if(Math.abs(c)<FPMIN) c=FPMIN;
+    d=1/d; h*=d*c;
+    aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2));
+    d=1+aa*d; if(Math.abs(d)<FPMIN) d=FPMIN;
+    c=1+aa/c; if(Math.abs(c)<FPMIN) c=FPMIN;
+    d=1/d; const del=d*c; h*=del;
+    if(Math.abs(del-1)<EPS) break;
+  }
+  return h;
+}
+
+function lgamma(x) {
+  const c=[76.18009172947146,-86.50532032941677,24.01409824083091,-1.231739572450155,0.1208650973866179e-2,-0.5395239384953e-5];
+  let y=x, tmp=x+5.5, ser=1.000000000190015;
+  tmp-=(x+0.5)*Math.log(tmp);
+  for(let j=0;j<6;j++) ser+=c[j]/++y;
+  return -tmp+Math.log(2.5066282746310005*ser/x);
+}
+
+function gammaInc(a, x) {
+  // Regularized incomplete gamma function P(a,x)
+  if(x<0) return 0;
+  if(x===0) return 0;
+  if(x<a+1) {
+    let ap=a, del=1/a, sum=del;
+    for(let i=0;i<200;i++) { ap++; del*=x/ap; sum+=del; if(Math.abs(del)<Math.abs(sum)*3e-7) break; }
+    return sum*Math.exp(-x+a*Math.log(x)-lgamma(a));
+  }
+  let b=x+1-a, c=1e30, d=1/b, h=d;
+  for(let i=1;i<=200;i++) {
+    const an=-i*(i-a); b+=2; d=an*d+b; if(Math.abs(d)<1e-30) d=1e-30;
+    c=b+an/c; if(Math.abs(c)<1e-30) c=1e-30;
+    d=1/d; h*=d*c; if(Math.abs(d*c-1)<3e-7) break;
+  }
+  return 1-Math.exp(-x+a*Math.log(x)-lgamma(a))*h;
+}
+
+function chiSquareCDF(x, k) {
+  if(x<=0) return 0;
+  return gammaInc(k/2, x/2);
+}
+
+function chiSquarePValue(x, k) {
+  return 1 - chiSquareCDF(x, k);
+}
+
+function fCDF(x, d1, d2) {
+  if(x<=0) return 0;
+  return incompleteBeta(d1*x/(d1*x+d2), d1/2, d2/2);
+}
+
+function fPValue(x, d1, d2) {
+  return 1 - fCDF(x, d1, d2);
+}
+
+function tPValue(t, df, tail='two') {
+  const p = 1 - tCDF(Math.abs(t), df);
+  if(tail==='two') return 2*p;
+  if(tail==='right') return t>=0?p:1-p;
+  return t<=0?p:1-p;
+}
+
+function tCritical(alpha, df, tail='two') {
+  // Use normal approximation for large df
+  if(df>200) return normalInv(tail==='two'?1-alpha/2:1-alpha);
+  // Simple bisection
+  const target = tail==='two'?1-alpha/2:1-alpha;
+  let lo=0, hi=10;
+  for(let i=0;i<60;i++) {
+    const mid=(lo+hi)/2;
+    if(tCDF(mid,df)<target) lo=mid; else hi=mid;
+  }
+  return (lo+hi)/2;
+}
+
+function chiCritical(alpha, df) {
+  let lo=0, hi=100;
+  for(let i=0;i<60;i++) {
+    const mid=(lo+hi)/2;
+    if(chiSquareCDF(mid,df)<1-alpha) lo=mid; else hi=mid;
+  }
+  return (lo+hi)/2;
+}
+
+function fCritical(alpha, d1, d2) {
+  let lo=0, hi=50;
+  for(let i=0;i<60;i++) {
+    const mid=(lo+hi)/2;
+    if(fCDF(mid,d1,d2)<1-alpha) lo=mid; else hi=mid;
+  }
+  return (lo+hi)/2;
+}
+
+function fmt(v, d=4) { return Number(v).toFixed(d); }
+function fmts(v, d=4) { return v<0.0001?'< 0.0001':fmt(v,d); }
+
+function showResult(id, html) {
+  const el=document.getElementById(id);
+  el.innerHTML=html;
+  el.classList.add('show');
+}
+
+function showError(id, msg) {
+  showResult(id,`<div class="error-msg">⚠ ${msg}</div>`);
+}
+
+function loadSample(id, val) {
+  document.getElementById(id).value=val;
+}
+
+function clearField(id1, resId) {
+  document.getElementById(id1).value='';
+  const el=document.getElementById(resId);
+  if(el) { el.innerHTML=''; el.classList.remove('show'); }
+  const chart=document.getElementById('desc-chart');
+  if(chart) chart.classList.remove('show');
+}
+
+function showPanel(name) {
+  document.querySelectorAll('.analysis-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+function switchTab(prefix, name) {
+  const container = event.currentTarget.closest('.analysis-panel, .main');
+  container.querySelectorAll('.tab').forEach((t,i)=>t.classList.remove('active'));
+  container.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  document.getElementById(prefix+'-tab-'+name).classList.add('active');
+}
+
+// ============================================================
+// DESCRIPTIVE STATISTICS
+// ============================================================
+function runDescriptive() {
+  const data = parseData(document.getElementById('desc-data').value);
+  if(data.length<2) return showError('desc-results','Please enter at least 2 numeric values.');
+  const n=data.length, m=mean(data), med=median(data), mo=mode(data), s=std(data),
+        v=variance(data), sk=skewness(data), ku=kurtosis(data), se=s/Math.sqrt(n),
+        min=Math.min(...data), max=Math.max(...data),
+        q1=percentile(data,25), q3=percentile(data,75), iqr=q3-q1,
+        range=max-min, cv=(s/m)*100,
+        t95=tCritical(0.05,n-1)*se;
+  showResult('desc-results',`
+<div class="results-header"><span>DESCRIPTIVE STATISTICS OUTPUT</span><span>n = ${n}</span></div>
+<div class="r-section">
+  <div class="r-title">━ Central Tendency</div>
+  <span class="r-key">Mean (x̄)        </span><span class="r-val"> ${fmt(m)}</span><br>
+  <span class="r-key">Median          </span><span class="r-val"> ${fmt(med)}</span><br>
+  <span class="r-key">Mode            </span><span class="r-val"> ${mo.join(', ')}</span><br>
+  <span class="r-key">Geometric Mean  </span><span class="r-val"> ${data.every(v=>v>0)?fmt(Math.exp(mean(data.map(v=>Math.log(v))))):'N/A (non-positive)'}</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Dispersion</div>
+  <span class="r-key">Std Dev (s)     </span><span class="r-val"> ${fmt(s)}</span><br>
+  <span class="r-key">Variance (s²)   </span><span class="r-val"> ${fmt(v)}</span><br>
+  <span class="r-key">Std Error (SE)  </span><span class="r-val"> ${fmt(se)}</span><br>
+  <span class="r-key">CV (%)          </span><span class="r-val"> ${fmt(cv,2)}%</span><br>
+  <span class="r-key">Range           </span><span class="r-val"> ${fmt(range)}</span><br>
+  <span class="r-key">IQR             </span><span class="r-val"> ${fmt(iqr)}</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Distribution Shape</div>
+  <span class="r-key">Skewness        </span><span class="r-val"> ${fmt(sk)}</span>  <span class="r-note">${Math.abs(sk)<0.5?'(approx. symmetric)':sk>0?'(right-skewed)':'(left-skewed)'}</span><br>
+  <span class="r-key">Excess Kurtosis </span><span class="r-val"> ${fmt(ku)}</span>  <span class="r-note">${Math.abs(ku)<0.5?'(mesokurtic / near-normal)':ku>0?'(leptokurtic / heavy-tailed)':'(platykurtic / light-tailed)'}</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Five-Number Summary</div>
+  <span class="r-key">Minimum (Min)   </span><span class="r-val"> ${fmt(min)}</span><br>
+  <span class="r-key">Q1 (25th pct)   </span><span class="r-val"> ${fmt(q1)}</span><br>
+  <span class="r-key">Median (Q2)     </span><span class="r-val"> ${fmt(med)}</span><br>
+  <span class="r-key">Q3 (75th pct)   </span><span class="r-val"> ${fmt(q3)}</span><br>
+  <span class="r-key">Maximum (Max)   </span><span class="r-val"> ${fmt(max)}</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Confidence Interval for Mean</div>
+  <span class="r-key">95% CI          </span><span class="r-val"> [${fmt(m-t95)}, ${fmt(m+t95)}]</span><br>
+  <span class="r-note">t(df=${n-1}) = ±${fmt(t95/se)}, SE = ${fmt(se)}</span>
+</div>
+<div class="watermark">Statistica</div>`);
+}
+
+// ============================================================
+// FREQUENCY
+// ============================================================
+function runFrequency() {
+  const raw=parseText(document.getElementById('freq-data').value);
+  if(raw.length<2) return showError('freq-results','Please enter at least 2 values.');
+  const freq={};
+  raw.forEach(v=>freq[v]=(freq[v]||0)+1);
+  const sorted=Object.entries(freq).sort((a,b)=>b[1]-a[1]);
+  const n=raw.length;
+  let cumFreq=0, rows='';
+  sorted.forEach(([val,f])=>{
+    cumFreq+=f;
+    const rel=(f/n)*100;
+    const cum=(cumFreq/n)*100;
+    rows+=`<tr><td>${val}</td><td>${f}</td><td>${rel.toFixed(2)}%</td><td>${cumFreq}</td><td>${cum.toFixed(2)}%</td></tr>`;
+  });
+  showResult('freq-results',`
+<div class="results-header"><span>FREQUENCY DISTRIBUTION TABLE</span><span>n = ${n}, k = ${sorted.length}</span></div>
+<table class="r-table">
+<thead><tr><th>Value</th><th>Frequency</th><th>Rel. Freq (%)</th><th>Cum. Freq</th><th>Cum. % </th></tr></thead>
+<tbody>${rows}</tbody>
+</table>
+<br><span class="r-key">Mode: </span><span class="r-val">${sorted[0][0]} (f=${sorted[0][1]})</span>
+<div class="watermark">Statistica</div>`);
+}
+
+// ============================================================
+// NORMALITY
+// ============================================================
+function runNormality() {
+  const data=parseData(document.getElementById('norm-data').value);
+  if(data.length<4) return showError('norm-results','Need at least 4 values for normality testing.');
+  const n=data.length, m=mean(data), s=std(data);
+  const sk=skewness(data), ku=kurtosis(data);
+  // Shapiro-Wilk approximation (small-sample)
+  const sorted=[...data].sort((a,b)=>a-b);
+  const zscores=data.map(v=>(v-m)/s);
+  // D statistic approximation (simple)
+  const expectedNormal=sorted.map((_,i)=>normalInv((i+1-0.375)/(n+0.25)));
+  let sumXY=0, sumX2=0, sumY2=0;
+  const corrX=expectedNormal.map(v=>v-mean(expectedNormal));
+  const corrY=sorted.map(v=>v-mean(sorted));
+  for(let i=0;i<n;i++){sumXY+=corrX[i]*corrY[i];sumX2+=corrX[i]**2;sumY2+=corrY[i]**2;}
+  const r=sumXY/Math.sqrt(sumX2*sumY2);
+  const W=r*r;
+  // Skewness test statistic
+  const seSkew=Math.sqrt(6/n);
+  const zSkew=sk/seSkew;
+  // Kurtosis test statistic
+  const seKurt=Math.sqrt(24/n);
+  const zKurt=ku/seKurt;
+  const pSkew=2*(1-normalCDF(Math.abs(zSkew)));
+  const pKurt=2*(1-normalCDF(Math.abs(zKurt)));
+  const isNormal=W>0.9&&Math.abs(sk)<1&&Math.abs(ku)<1;
+  showResult('norm-results',`
+<div class="results-header"><span>NORMALITY TEST OUTPUT</span><span>n = ${n}</span></div>
+<div class="r-section">
+  <div class="r-title">━ Shapiro-Wilk Approximation</div>
+  <span class="r-key">W statistic     </span><span class="r-val"> ${fmt(W,4)}</span><br>
+  <span class="r-key">QQ Correlation  </span><span class="r-val"> r = ${fmt(r,4)}</span><br>
+  <span class="r-note">W close to 1.0 = normally distributed. W < 0.9 suggests non-normality.</span><br>
+  <span class="${W>0.95?'r-ok':'r-sig'}">${W>0.95?'✓ Likely normal (W > 0.95)':W>0.9?'△ Borderline normal':'✗ Likely non-normal (W < 0.9)'}</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Skewness Test</div>
+  <span class="r-key">Skewness        </span><span class="r-val"> ${fmt(sk)}</span><br>
+  <span class="r-key">SE(skewness)    </span><span class="r-val"> ${fmt(seSkew)}</span><br>
+  <span class="r-key">Z statistic     </span><span class="r-val"> ${fmt(zSkew)}</span><br>
+  <span class="r-key">p-value         </span><span class="${pSkew<0.05?'r-sig':'r-ok'}"> ${fmts(pSkew)}</span><br>
+  <span class="r-note">${pSkew<0.05?'Significant departure from zero skewness (non-normal skew)':'Skewness not significantly different from normal'}</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Kurtosis Test</div>
+  <span class="r-key">Excess Kurtosis </span><span class="r-val"> ${fmt(ku)}</span><br>
+  <span class="r-key">SE(kurtosis)    </span><span class="r-val"> ${fmt(seKurt)}</span><br>
+  <span class="r-key">Z statistic     </span><span class="r-val"> ${fmt(zKurt)}</span><br>
+  <span class="r-key">p-value         </span><span class="${pKurt<0.05?'r-sig':'r-ok'}"> ${fmts(pKurt)}</span><br>
+  <span class="r-note">${pKurt<0.05?'Significant departure from normal kurtosis':'Kurtosis not significantly different from normal'}</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Overall Assessment</div>
+  <span class="${isNormal?'r-ok':'r-sig'}">${isNormal?'✓ DATA APPEARS NORMALLY DISTRIBUTED':'⚠ NORMALITY ASSUMPTION MAY BE VIOLATED'}</span><br>
+  <span class="r-note">Recommendation: ${isNormal?'Proceed with parametric tests (t-test, ANOVA, etc.)':'Consider non-parametric tests (Mann-Whitney, Wilcoxon, Kruskal-Wallis)'}</span>
+</div>
+<div class="watermark">Statistica</div>`);
+}
+
+// ============================================================
+// ONE-SAMPLE T-TEST
+// ============================================================
+function runOneSampleT() {
+  const data=parseData(document.getElementById('t1-data').value);
+  const mu=parseFloat(document.getElementById('t1-mu').value);
+  const alpha=parseFloat(document.getElementById('t1-alpha').value);
+  if(data.length<2) return showError('t1-results','Enter at least 2 values.');
+  if(isNaN(mu)) return showError('t1-results','Enter a population mean.');
+  const n=data.length, m=mean(data), s=std(data), se=s/Math.sqrt(n);
+  const t=(m-mu)/se, df=n-1;
+  const p=tPValue(t,df,'two');
+  const tcrit=tCritical(alpha,df,'two');
+  const ci_low=m-tcrit*se, ci_high=m+tcrit*se;
+  const d=(m-mu)/s;
+  const sig=p<alpha;
+  showResult('t1-results',`
+<div class="results-header"><span>ONE-SAMPLE T-TEST OUTPUT</span><span>H₀: μ = ${mu}</span></div>
+<div class="r-section">
+  <div class="r-title">━ Sample Statistics</div>
+  <span class="r-key">n               </span><span class="r-val"> ${n}</span><br>
+  <span class="r-key">Mean (x̄)        </span><span class="r-val"> ${fmt(m)}</span><br>
+  <span class="r-key">Std Dev (s)     </span><span class="r-val"> ${fmt(s)}</span><br>
+  <span class="r-key">Std Error (SE)  </span><span class="r-val"> ${fmt(se)}</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Test Results</div>
+  <span class="r-key">t statistic     </span><span class="r-val"> ${fmt(t)}</span><br>
+  <span class="r-key">df              </span><span class="r-val"> ${df}</span><br>
+  <span class="r-key">t critical (±)  </span><span class="r-val"> ±${fmt(tcrit)}</span><br>
+  <span class="r-key">p-value (2-tail) </span><span class="${sig?'r-sig':'r-ok'}"> ${fmts(p)}</span><br>
+  <span class="r-key">${(1-alpha)*100}% CI        </span><span class="r-val"> [${fmt(ci_low)}, ${fmt(ci_high)}]</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Effect Size</div>
+  <span class="r-key">Cohen's d       </span><span class="r-val"> ${fmt(d)}</span>  <span class="r-note">${Math.abs(d)<0.2?'(negligible)':Math.abs(d)<0.5?'(small)':Math.abs(d)<0.8?'(medium)':'(large)'}</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Decision</div>
+  <span class="${sig?'r-sig':'r-ok'}">${sig?`✗ REJECT H₀ — The sample mean (${fmt(m)}) differs significantly from μ = ${mu} (p = ${fmts(p)}, α = ${alpha})`:`✓ FAIL TO REJECT H₀ — No significant difference from μ = ${mu} (p = ${fmts(p)}, α = ${alpha})`}</span>
+</div>
+<div class="watermark">Statistica</div>`);
+}
+
+// ============================================================
+// INDEPENDENT SAMPLES T-TEST
+// ============================================================
+function runIndepT() {
+  const g1=parseData(document.getElementById('t2-g1').value);
+  const g2=parseData(document.getElementById('t2-g2').value);
+  const alpha=parseFloat(document.getElementById('t2-alpha').value);
+  const tail=document.getElementById('t2-tail').value;
+  if(g1.length<2||g2.length<2) return showError('t2-results','Each group needs at least 2 values.');
+  const n1=g1.length, n2=g2.length, m1=mean(g1), m2=mean(g2);
+  const s1=std(g1), s2=std(g2);
+  // Welch's t-test (unequal variances assumed)
+  const se=Math.sqrt(s1**2/n1+s2**2/n2);
+  const t=(m1-m2)/se;
+  // Welch-Satterthwaite df
+  const df=Math.floor((s1**2/n1+s2**2/n2)**2/((s1**2/n1)**2/(n1-1)+(s2**2/n2)**2/(n2-1)));
+  const p=tPValue(t,df,tail);
+  const tcrit=tCritical(alpha,df,tail);
+  const ci_low=(m1-m2)-tCritical(alpha,df,'two')*se;
+  const ci_high=(m1-m2)+tCritical(alpha,df,'two')*se;
+  const sp=Math.sqrt(((n1-1)*s1**2+(n2-1)*s2**2)/(n1+n2-2));
+  const d=(m1-m2)/sp;
+  const sig=p<alpha;
+  showResult('t2-results',`
+<div class="results-header"><span>INDEPENDENT SAMPLES T-TEST (Welch's)</span><span>H₀: μ₁ = μ₂</span></div>
+<div class="r-section">
+  <div class="r-title">━ Group Statistics</div>
+  <table class="r-table">
+  <thead><tr><th>Group</th><th>n</th><th>Mean</th><th>SD</th><th>SE</th></tr></thead>
+  <tbody>
+  <tr><td>Group 1</td><td>${n1}</td><td>${fmt(m1)}</td><td>${fmt(s1)}</td><td>${fmt(s1/Math.sqrt(n1))}</td></tr>
+  <tr><td>Group 2</td><td>${n2}</td><td>${fmt(m2)}</td><td>${fmt(s2)}</td><td>${fmt(s2/Math.sqrt(n2))}</td></tr>
+  </tbody></table>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Test Results</div>
+  <span class="r-key">Mean diff (μ₁-μ₂)</span><span class="r-val"> ${fmt(m1-m2)}</span><br>
+  <span class="r-key">t statistic     </span><span class="r-val"> ${fmt(t)}</span><br>
+  <span class="r-key">df (Welch)      </span><span class="r-val"> ${df}</span><br>
+  <span class="r-key">p-value (${tail}) </span><span class="${sig?'r-sig':'r-ok'}"> ${fmts(p)}</span><br>
+  <span class="r-key">95% CI (diff)   </span><span class="r-val"> [${fmt(ci_low)}, ${fmt(ci_high)}]</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Effect Size</div>
+  <span class="r-key">Cohen's d       </span><span class="r-val"> ${fmt(d)}</span>  <span class="r-note">${Math.abs(d)<0.2?'(negligible)':Math.abs(d)<0.5?'(small)':Math.abs(d)<0.8?'(medium)':'(large)'}</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Decision (α = ${alpha})</div>
+  <span class="${sig?'r-sig':'r-ok'}">${sig?`✗ REJECT H₀ — Significant difference between groups (t = ${fmt(t)}, p = ${fmts(p)})`:`✓ FAIL TO REJECT H₀ — No significant difference between groups (p = ${fmts(p)})`}</span>
+</div>
+<div class="watermark">Statistica</div>`);
+}
+
+// ============================================================
+// PAIRED T-TEST
+// ============================================================
+function runPairedT() {
+  const pre=parseData(document.getElementById('t3-pre').value);
+  const post=parseData(document.getElementById('t3-post').value);
+  if(pre.length!==post.length||pre.length<2) return showError('t3-results','Both groups must have equal length (≥ 2).');
+  const diff=pre.map((v,i)=>post[i]-v);
+  const n=diff.length, md=mean(diff), sd=std(diff), se=sd/Math.sqrt(n);
+  const t=md/se, df=n-1;
+  const p=tPValue(t,df,'two');
+  const tcrit=tCritical(0.05,df,'two');
+  const ci_low=md-tcrit*se, ci_high=md+tcrit*se;
+  const d=md/sd;
+  const sig=p<0.05;
+  showResult('t3-results',`
+<div class="results-header"><span>PAIRED SAMPLES T-TEST</span><span>H₀: μdiff = 0</span></div>
+<div class="r-section">
+  <div class="r-title">━ Paired Differences</div>
+  <span class="r-key">n pairs         </span><span class="r-val"> ${n}</span><br>
+  <span class="r-key">Mean diff       </span><span class="r-val"> ${fmt(md)}</span><br>
+  <span class="r-key">SD of diff      </span><span class="r-val"> ${fmt(sd)}</span><br>
+  <span class="r-key">SE of diff      </span><span class="r-val"> ${fmt(se)}</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Test Results</div>
+  <span class="r-key">t statistic     </span><span class="r-val"> ${fmt(t)}</span><br>
+  <span class="r-key">df              </span><span class="r-val"> ${df}</span><br>
+  <span class="r-key">p-value (2-tail) </span><span class="${sig?'r-sig':'r-ok'}"> ${fmts(p)}</span><br>
+  <span class="r-key">95% CI (diff)   </span><span class="r-val"> [${fmt(ci_low)}, ${fmt(ci_high)}]</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Effect Size</div>
+  <span class="r-key">Cohen's d (dz)  </span><span class="r-val"> ${fmt(d)}</span>  <span class="r-note">${Math.abs(d)<0.2?'(negligible)':Math.abs(d)<0.5?'(small)':Math.abs(d)<0.8?'(medium)':'(large)'}</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Decision</div>
+  <span class="${sig?'r-sig':'r-ok'}">${sig?`✗ REJECT H₀ — Significant difference between paired measurements (p = ${fmts(p)})`:`✓ FAIL TO REJECT H₀ — No significant change (p = ${fmts(p)})`}</span>
+</div>
+<div class="watermark">Statistica</div>`);
+}
+
+// ============================================================
+// ONE-WAY ANOVA
+// ============================================================
+function runANOVA() {
+  const ids=['anova-g1','anova-g2','anova-g3','anova-g4'];
+  const groups=ids.map(id=>parseData(document.getElementById(id).value)).filter(g=>g.length>0);
+  if(groups.length<2) return showError('anova-results','Need at least 2 groups.');
+  if(groups.some(g=>g.length<2)) return showError('anova-results','Each group needs at least 2 values.');
+  const all=[].concat(...groups), N=all.length, k=groups.length;
+  const grandMean=mean(all);
+  const SSB=groups.reduce((a,g)=>a+g.length*(mean(g)-grandMean)**2,0);
+  const SSW=groups.reduce((a,g)=>a+g.reduce((b,v)=>b+(v-mean(g))**2,0),0);
+  const SST=SSB+SSW;
+  const dfB=k-1, dfW=N-k, dfT=N-1;
+  const MSB=SSB/dfB, MSW=SSW/dfW;
+  const F=MSB/MSW;
+  const p=fPValue(F,dfB,dfW);
+  const fcrit=fCritical(0.05,dfB,dfW);
+  const eta2=SSB/SST;
+  const sig=p<0.05;
+  let groupStats='';
+  groups.forEach((g,i)=>{groupStats+=`<tr><td>Group ${i+1}</td><td>${g.length}</td><td>${fmt(mean(g))}</td><td>${fmt(std(g))}</td><td>${fmt(mean(g)-1.96*std(g)/Math.sqrt(g.length))}</td><td>${fmt(mean(g)+1.96*std(g)/Math.sqrt(g.length))}</td></tr>`;});
+  showResult('anova-results',`
+<div class="results-header"><span>ONE-WAY ANOVA OUTPUT</span><span>k = ${k}, N = ${N}</span></div>
+<div class="r-section">
+  <div class="r-title">━ Group Descriptives</div>
+  <table class="r-table">
+  <thead><tr><th>Group</th><th>n</th><th>Mean</th><th>SD</th><th>95% CI Low</th><th>95% CI High</th></tr></thead>
+  <tbody>${groupStats}</tbody></table>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ ANOVA Table</div>
+  <table class="r-table">
+  <thead><tr><th>Source</th><th>SS</th><th>df</th><th>MS</th><th>F</th><th>p-value</th></tr></thead>
+  <tbody>
+  <tr><td>Between</td><td>${fmt(SSB)}</td><td>${dfB}</td><td>${fmt(MSB)}</td><td>${fmt(F)}</td><td class="${sig?'r-sig r-ok':''}">${fmts(p)}</td></tr>
+  <tr><td>Within</td><td>${fmt(SSW)}</td><td>${dfW}</td><td>${fmt(MSW)}</td><td>—</td><td>—</td></tr>
+  <tr><td>Total</td><td>${fmt(SST)}</td><td>${dfT}</td><td>—</td><td>—</td><td>—</td></tr>
+  </tbody></table>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Effect Size</div>
+  <span class="r-key">Eta-squared (η²)</span><span class="r-val"> ${fmt(eta2)}</span>  <span class="r-note">${eta2<0.01?'(negligible)':eta2<0.06?'(small)':eta2<0.14?'(medium)':'(large)'}</span><br>
+  <span class="r-key">F critical      </span><span class="r-val"> ${fmt(fcrit)}</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Decision</div>
+  <span class="${sig?'r-sig':'r-ok'}">${sig?`✗ REJECT H₀ — Significant differences among group means (F = ${fmt(F)}, p = ${fmts(p)})`:`✓ FAIL TO REJECT H₀ — No significant differences among groups (p = ${fmts(p)})`}</span><br>
+  ${sig?`<span class="r-note">Post-hoc tests (Tukey, Bonferroni) recommended to identify specific group differences.</span>`:''}
+</div>
+<div class="watermark">Statistica</div>`);
+}
+
+function clearANOVA() {
+  ['anova-g1','anova-g2','anova-g3','anova-g4'].forEach(id=>document.getElementById(id).value='');
+  const el=document.getElementById('anova-results'); el.innerHTML=''; el.classList.remove('show');
+}
+
+// ============================================================
+// CHI-SQUARE GOF
+// ============================================================
+function runChiGOF() {
+  const obs=document.getElementById('chi-obs').value.split(/[,\s]+/).map(Number).filter(v=>!isNaN(v)&&v!==undefined);
+  let exp=document.getElementById('chi-exp').value.split(/[,\s]+/).map(Number).filter(v=>!isNaN(v));
+  if(obs.length<2) return showError('chi1-results','Enter at least 2 observed frequencies.');
+  if(exp.length===0) { const tot=obs.reduce((a,b)=>a+b,0); exp=obs.map(()=>tot/obs.length); }
+  if(obs.length!==exp.length) return showError('chi1-results','Observed and expected must have the same number of categories.');
+  const chi2=obs.reduce((a,o,i)=>a+(o-exp[i])**2/exp[i],0);
+  const df=obs.length-1;
+  const p=chiSquarePValue(chi2,df);
+  const sig=p<0.05;
+  let rows='';
+  obs.forEach((o,i)=>rows+=`<tr><td>Category ${i+1}</td><td>${o}</td><td>${fmt(exp[i],2)}</td><td>${fmt((o-exp[i])**2/exp[i],4)}</td></tr>`);
+  showResult('chi1-results',`
+<div class="results-header"><span>CHI-SQUARE GOODNESS-OF-FIT</span><span>k = ${obs.length}</span></div>
+<div class="r-section">
+  <table class="r-table">
+  <thead><tr><th>Category</th><th>Observed</th><th>Expected</th><th>(O-E)²/E</th></tr></thead>
+  <tbody>${rows}</tbody></table>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Test Results</div>
+  <span class="r-key">χ² statistic    </span><span class="r-val"> ${fmt(chi2)}</span><br>
+  <span class="r-key">df              </span><span class="r-val"> ${df}</span><br>
+  <span class="r-key">p-value         </span><span class="${sig?'r-sig':'r-ok'}"> ${fmts(p)}</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Decision</div>
+  <span class="${sig?'r-sig':'r-ok'}">${sig?`✗ REJECT H₀ — Observed frequencies differ significantly from expected (χ² = ${fmt(chi2)}, p = ${fmts(p)})`:`✓ FAIL TO REJECT H₀ — Observed frequencies are consistent with expected (p = ${fmts(p)})`}</span>
+</div>
+<div class="watermark">Statistica</div>`);
+}
+
+// ============================================================
+// CHI-SQUARE TEST OF INDEPENDENCE
+// ============================================================
+function runChiIndep() {
+  const raw=document.getElementById('chi-table').value.trim();
+  const rows=raw.split(/[|\n]+/).map(r=>r.trim().split(/[,\s]+/).map(Number).filter(v=>!isNaN(v))).filter(r=>r.length>0);
+  if(rows.length<2) return showError('chi2-results','Enter at least a 2×2 table.');
+  const nCols=rows[0].length;
+  if(rows.some(r=>r.length!==nCols)) return showError('chi2-results','All rows must have the same number of columns.');
+  const rowTotals=rows.map(r=>r.reduce((a,b)=>a+b,0));
+  const colTotals=Array.from({length:nCols},(_,j)=>rows.reduce((a,r)=>a+r[j],0));
+  const N=rowTotals.reduce((a,b)=>a+b,0);
+  let chi2=0;
+  const minDim=Math.min(rows.length,nCols);
+  rows.forEach((row,i)=>row.forEach((o,j)=>{
+    const e=rowTotals[i]*colTotals[j]/N;
+    chi2+=(o-e)**2/e;
+  }));
+  const df=(rows.length-1)*(nCols-1);
+  const p=chiSquarePValue(chi2,df);
+  const V=Math.sqrt(chi2/(N*(minDim-1)));
+  const sig=p<0.05;
+  showResult('chi2-results',`
+<div class="results-header"><span>CHI-SQUARE TEST OF INDEPENDENCE</span><span>${rows.length}×${nCols} table, N = ${N}</span></div>
+<div class="r-section">
+  <div class="r-title">━ Test Results</div>
+  <span class="r-key">χ² statistic    </span><span class="r-val"> ${fmt(chi2)}</span><br>
+  <span class="r-key">df              </span><span class="r-val"> ${df}</span><br>
+  <span class="r-key">p-value         </span><span class="${sig?'r-sig':'r-ok'}"> ${fmts(p)}</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Effect Size</div>
+  <span class="r-key">Cramér's V      </span><span class="r-val"> ${fmt(V)}</span>  <span class="r-note">${V<0.1?'(negligible)':V<0.3?'(small)':V<0.5?'(medium)':'(large)'}</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Decision</div>
+  <span class="${sig?'r-sig':'r-ok'}">${sig?`✗ REJECT H₀ — Significant association between variables (χ² = ${fmt(chi2)}, p = ${fmts(p)})`:`✓ FAIL TO REJECT H₀ — No significant association (p = ${fmts(p)})`}</span>
+</div>
+<div class="watermark">Statistica</div>`);
+}
+
+// ============================================================
+// Z-TEST
+// ============================================================
+function loadZSample() {
+  document.getElementById('z-mean').value=52;
+  document.getElementById('z-mu').value=50;
+  document.getElementById('z-sigma').value=10;
+  document.getElementById('z-n').value=30;
+}
+
+function runZTest() {
+  const xbar=parseFloat(document.getElementById('z-mean').value);
+  const mu=parseFloat(document.getElementById('z-mu').value);
+  const sigma=parseFloat(document.getElementById('z-sigma').value);
+  const n=parseFloat(document.getElementById('z-n').value);
+  const alpha=parseFloat(document.getElementById('z-alpha').value);
+  const tail=document.getElementById('z-tail').value;
+  if([xbar,mu,sigma,n].some(isNaN)) return showError('z-results','Please fill all fields.');
+  const se=sigma/Math.sqrt(n), z=(xbar-mu)/se;
+  let p;
+  if(tail==='two') p=2*(1-normalCDF(Math.abs(z)));
+  else if(tail==='right') p=1-normalCDF(z);
+  else p=normalCDF(z);
+  const zcrit=normalInv(tail==='two'?1-alpha/2:1-alpha);
+  const ci_low=xbar-Math.abs(zcrit)*se, ci_high=xbar+Math.abs(zcrit)*se;
+  const sig=p<alpha;
+  showResult('z-results',`
+<div class="results-header"><span>ONE-SAMPLE Z-TEST</span><span>H₀: μ = ${mu}</span></div>
+<div class="r-section">
+  <span class="r-key">x̄ (sample mean) </span><span class="r-val"> ${fmt(xbar)}</span><br>
+  <span class="r-key">μ (pop. mean)   </span><span class="r-val"> ${mu}</span><br>
+  <span class="r-key">σ (pop. SD)     </span><span class="r-val"> ${sigma}</span><br>
+  <span class="r-key">n               </span><span class="r-val"> ${n}</span><br>
+  <span class="r-key">SE = σ/√n       </span><span class="r-val"> ${fmt(se)}</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Test Results</div>
+  <span class="r-key">Z statistic     </span><span class="r-val"> ${fmt(z)}</span><br>
+  <span class="r-key">Z critical      </span><span class="r-val"> ±${fmt(Math.abs(zcrit))}</span><br>
+  <span class="r-key">p-value (${tail}) </span><span class="${sig?'r-sig':'r-ok'}"> ${fmts(p)}</span><br>
+  <span class="r-key">${(1-alpha)*100}% CI        </span><span class="r-val"> [${fmt(ci_low)}, ${fmt(ci_high)}]</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Decision</div>
+  <span class="${sig?'r-sig':'r-ok'}">${sig?`✗ REJECT H₀ — Z = ${fmt(z)}, p = ${fmts(p)} < α = ${alpha}`:`✓ FAIL TO REJECT H₀ — Z = ${fmt(z)}, p = ${fmts(p)} ≥ α = ${alpha}`}</span>
+</div>
+<div class="watermark">Statistica</div>`);
+}
+
+// ============================================================
+// PEARSON CORRELATION
+// ============================================================
+function runCorrelation() {
+  const x=parseData(document.getElementById('corr-x').value);
+  const y=parseData(document.getElementById('corr-y').value);
+  if(x.length!==y.length||x.length<3) return showError('corr-results','Both variables must have equal length (≥ 3).');
+  const n=x.length, mx=mean(x), my=mean(y);
+  let sumXY=0, sumX2=0, sumY2=0;
+  for(let i=0;i<n;i++){sumXY+=(x[i]-mx)*(y[i]-my);sumX2+=(x[i]-mx)**2;sumY2+=(y[i]-my)**2;}
+  const r=sumXY/Math.sqrt(sumX2*sumY2), r2=r*r;
+  const se=Math.sqrt((1-r2)/(n-2));
+  const t=r/se, df=n-2;
+  const p=tPValue(t,df,'two');
+  const zcrit=normalInv(0.975);
+  const zr=0.5*Math.log((1+r)/(1-r));
+  const ci_lo=Math.tanh(zr-zcrit/Math.sqrt(n-3));
+  const ci_hi=Math.tanh(zr+zcrit/Math.sqrt(n-3));
+  const sig=p<0.05;
+  showResult('corr-results',`
+<div class="results-header"><span>PEARSON CORRELATION OUTPUT</span><span>n = ${n}</span></div>
+<div class="r-section">
+  <div class="r-title">━ Correlation Statistics</div>
+  <span class="r-key">Pearson's r     </span><span class="r-val"> ${fmt(r)}</span>  <span class="r-note">${Math.abs(r)<0.1?'(negligible)':Math.abs(r)<0.3?'(small)':Math.abs(r)<0.5?'(moderate)':Math.abs(r)<0.7?'(large)':'(very large)'}, ${r>=0?'positive':'negative'} direction</span><br>
+  <span class="r-key">R² (var. explained)</span><span class="r-val"> ${fmt(r2,4)} (${(r2*100).toFixed(2)}%)</span><br>
+  <span class="r-key">95% CI (Fisher Z)</span><span class="r-val"> [${fmt(ci_lo)}, ${fmt(ci_hi)}]</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Significance Test</div>
+  <span class="r-key">t statistic     </span><span class="r-val"> ${fmt(t)}</span><br>
+  <span class="r-key">df              </span><span class="r-val"> ${df}</span><br>
+  <span class="r-key">p-value (2-tail) </span><span class="${sig?'r-sig':'r-ok'}"> ${fmts(p)}</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Decision</div>
+  <span class="${sig?'r-sig':'r-ok'}">${sig?`✗ SIGNIFICANT correlation (r = ${fmt(r)}, p = ${fmts(p)})`:`✓ NOT SIGNIFICANT (r = ${fmt(r)}, p = ${fmts(p)})`}</span>
+</div>
+<div class="watermark">Statistica</div>`);
+}
+
+// ============================================================
+// SIMPLE LINEAR REGRESSION
+// ============================================================
+function runRegression() {
+  const x=parseData(document.getElementById('reg-x').value);
+  const y=parseData(document.getElementById('reg-y').value);
+  if(x.length!==y.length||x.length<3) return showError('reg-results','Both variables must have equal length (≥ 3).');
+  const n=x.length, mx=mean(x), my=mean(y);
+  let Sxy=0, Sxx=0, Syy=0;
+  for(let i=0;i<n;i++){Sxy+=(x[i]-mx)*(y[i]-my);Sxx+=(x[i]-mx)**2;Syy+=(y[i]-my)**2;}
+  const b1=Sxy/Sxx, b0=my-b1*mx;
+  const SSR=b1*Sxy, SSE=Syy-SSR, SST=Syy;
+  const r2=SSR/SST, r2adj=1-(1-r2)*(n-1)/(n-2);
+  const df_reg=1, df_res=n-2, df_tot=n-1;
+  const MSR=SSR/df_reg, MSE=SSE/df_res;
+  const F=MSR/MSE, pF=fPValue(F,df_reg,df_res);
+  const sb1=Math.sqrt(MSE/Sxx), sb0=Math.sqrt(MSE*(1/n+mx**2/Sxx));
+  const t_b1=b1/sb1, t_b0=b0/sb0;
+  const p_b1=tPValue(t_b1,df_res,'two'), p_b0=tPValue(t_b0,df_res,'two');
+  const tcrit=tCritical(0.05,df_res,'two');
+  const rmse=Math.sqrt(MSE);
+  showResult('reg-results',`
+<div class="results-header"><span>SIMPLE LINEAR REGRESSION OUTPUT</span><span>n = ${n}</span></div>
+<div class="r-section">
+  <div class="r-title">━ Model Equation</div>
+  <span class="r-val">  Ŷ = ${fmt(b0)} + ${fmt(b1)} × X</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Coefficients</div>
+  <table class="r-table">
+  <thead><tr><th>Term</th><th>Estimate</th><th>SE</th><th>t</th><th>p-value</th><th>95% CI</th></tr></thead>
+  <tbody>
+  <tr><td>Intercept (β₀)</td><td>${fmt(b0)}</td><td>${fmt(sb0)}</td><td>${fmt(t_b0)}</td><td class="${p_b0<0.05?'r-sig':''}">${fmts(p_b0)}</td><td>[${fmt(b0-tcrit*sb0)}, ${fmt(b0+tcrit*sb0)}]</td></tr>
+  <tr><td>Slope (β₁)</td><td>${fmt(b1)}</td><td>${fmt(sb1)}</td><td>${fmt(t_b1)}</td><td class="${p_b1<0.05?'r-sig':''}">${fmts(p_b1)}</td><td>[${fmt(b1-tcrit*sb1)}, ${fmt(b1+tcrit*sb1)}]</td></tr>
+  </tbody></table>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Model Fit</div>
+  <span class="r-key">R²              </span><span class="r-val"> ${fmt(r2)}</span><br>
+  <span class="r-key">Adjusted R²     </span><span class="r-val"> ${fmt(r2adj)}</span><br>
+  <span class="r-key">RMSE            </span><span class="r-val"> ${fmt(rmse)}</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ ANOVA Table</div>
+  <table class="r-table">
+  <thead><tr><th>Source</th><th>SS</th><th>df</th><th>MS</th><th>F</th><th>p-value</th></tr></thead>
+  <tbody>
+  <tr><td>Regression</td><td>${fmt(SSR)}</td><td>${df_reg}</td><td>${fmt(MSR)}</td><td>${fmt(F)}</td><td class="${pF<0.05?'r-sig':''}">${fmts(pF)}</td></tr>
+  <tr><td>Residual</td><td>${fmt(SSE)}</td><td>${df_res}</td><td>${fmt(MSE)}</td><td>—</td><td>—</td></tr>
+  <tr><td>Total</td><td>${fmt(SST)}</td><td>${df_tot}</td><td>—</td><td>—</td><td>—</td></tr>
+  </tbody></table>
+</div>
+<div class="watermark">Statistica</div>`);
+}
+
+// ============================================================
+// MULTIPLE REGRESSION (using matrix algebra via math.js)
+// ============================================================
+function loadMRegSample() {
+  document.getElementById('mreg-y').value='12,15,14,18,20,22,19,25,23,28';
+  document.getElementById('mreg-x1').value='2,3,3,4,5,5,4,6,6,7';
+  document.getElementById('mreg-x2').value='1,1,2,2,1,3,2,2,3,3';
+  document.getElementById('mreg-x3').value='';
+}
+
+function runMultipleRegression() {
+  const yRaw=document.getElementById('mreg-y').value.split(/[,\s]+/).map(Number).filter(v=>!isNaN(v));
+  const x1=document.getElementById('mreg-x1').value.split(/[,\s]+/).map(Number).filter(v=>!isNaN(v));
+  const x2=document.getElementById('mreg-x2').value.split(/[,\s]+/).map(Number).filter(v=>!isNaN(v));
+  const x3raw=document.getElementById('mreg-x3').value.trim();
+  const x3=x3raw?x3raw.split(/[,\s]+/).map(Number).filter(v=>!isNaN(v)):[];
+  const useX3=x3.length>0;
+  const n=yRaw.length;
+  if(x1.length!==n||x2.length!==n) return showError('mreg-results','Y, X1, and X2 must have same length.');
+  if(useX3&&x3.length!==n) return showError('mreg-results','X3 must have same length as other variables.');
+  // Build X matrix [1, x1, x2, (x3)]
+  const Xmat=yRaw.map((_,i)=>useX3?[1,x1[i],x2[i],x3[i]]:[1,x1[i],x2[i]]);
+  const Y=yRaw.map(v=>[v]);
+  try {
+    const Xm=math.matrix(Xmat), Ym=math.matrix(Y);
+    const Xt=math.transpose(Xm);
+    const XtX=math.multiply(Xt,Xm);
+    const XtXinv=math.inv(XtX);
+    const XtY=math.multiply(Xt,Ym);
+    const betas=math.multiply(XtXinv,XtY).toArray().map(r=>r[0]);
+    const Yhat=Xmat.map(row=>row.reduce((s,v,j)=>s+v*betas[j],0));
+    const resids=yRaw.map((v,i)=>v-Yhat[i]);
+    const SSE=resids.reduce((a,r)=>a+r**2,0);
+    const my=mean(yRaw);
+    const SST=yRaw.reduce((a,v)=>a+(v-my)**2,0);
+    const SSR=SST-SSE;
+    const p_coef=betas.length;
+    const df_reg=p_coef-1, df_res=n-p_coef;
+    const MSE=SSE/df_res, MSR=SSR/df_reg;
+    const F=MSR/MSE, r2=SSR/SST, r2adj=1-(1-r2)*(n-1)/(n-p_coef);
+    const pF=fPValue(F,df_reg,df_res);
+    // Standard errors
+    const XtXinvArr=XtXinv.toArray();
+    const ses=betas.map((_,j)=>Math.sqrt(MSE*XtXinvArr[j][j]));
+    const ts=betas.map((b,j)=>b/ses[j]);
+    const ps=ts.map(t=>tPValue(t,df_res,'two'));
+    const labels=['Intercept','β₁ (X1)','β₂ (X2)'];
+    if(useX3) labels.push('β₃ (X3)');
+    let coeffRows=betas.map((b,j)=>`<tr><td>${labels[j]}</td><td>${fmt(b)}</td><td>${fmt(ses[j])}</td><td>${fmt(ts[j])}</td><td class="${ps[j]<0.05?'r-sig':''}">${fmts(ps[j])}</td></tr>`).join('');
+    showResult('mreg-results',`
+<div class="results-header"><span>MULTIPLE LINEAR REGRESSION OUTPUT</span><span>n = ${n}</span></div>
+<div class="r-section">
+  <div class="r-title">━ Model Fit</div>
+  <span class="r-key">R²              </span><span class="r-val"> ${fmt(r2)}</span><br>
+  <span class="r-key">Adjusted R²     </span><span class="r-val"> ${fmt(r2adj)}</span><br>
+  <span class="r-key">RMSE            </span><span class="r-val"> ${fmt(Math.sqrt(MSE))}</span><br>
+  <span class="r-key">F statistic     </span><span class="r-val"> ${fmt(F)}</span><br>
+  <span class="r-key">p-value (F)     </span><span class="${pF<0.05?'r-sig':'r-ok'}"> ${fmts(pF)}</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Coefficients</div>
+  <table class="r-table">
+  <thead><tr><th>Term</th><th>Estimate</th><th>SE</th><th>t</th><th>p-value</th></tr></thead>
+  <tbody>${coeffRows}</tbody></table>
+</div>
+<div class="watermark">Statistica</div>`);
+  } catch(e) {
+    showError('mreg-results','Matrix inversion failed. Check for multicollinearity or insufficient data.');
+  }
+}
+
+// ============================================================
+// MANN-WHITNEY U
+// ============================================================
+function runMannWhitney() {
+  const g1=parseData(document.getElementById('mw-g1').value);
+  const g2=parseData(document.getElementById('mw-g2').value);
+  if(g1.length<2||g2.length<2) return showError('mw-results','Each group needs at least 2 values.');
+  const n1=g1.length, n2=g2.length;
+  let U1=0, U2=0;
+  g1.forEach(a=>g2.forEach(b=>{if(a>b)U1++;else if(a<b)U2++;}));
+  const U=Math.min(U1,U2);
+  const mu_U=n1*n2/2, sigma_U=Math.sqrt(n1*n2*(n1+n2+1)/12);
+  const z=(U-mu_U)/sigma_U;
+  const p=2*(1-normalCDF(Math.abs(z)));
+  const r=z/Math.sqrt(n1+n2);
+  const sig=p<0.05;
+  showResult('mw-results',`
+<div class="results-header"><span>MANN-WHITNEY U TEST</span><span>H₀: distributions are equal</span></div>
+<div class="r-section">
+  <span class="r-key">n₁              </span><span class="r-val"> ${n1}</span><br>
+  <span class="r-key">n₂              </span><span class="r-val"> ${n2}</span><br>
+  <span class="r-key">U₁              </span><span class="r-val"> ${U1}</span><br>
+  <span class="r-key">U₂              </span><span class="r-val"> ${U2}</span><br>
+  <span class="r-key">U (min)         </span><span class="r-val"> ${U}</span><br>
+  <span class="r-key">Z (normal approx)</span><span class="r-val"> ${fmt(z)}</span><br>
+  <span class="r-key">p-value (2-tail) </span><span class="${sig?'r-sig':'r-ok'}"> ${fmts(p)}</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Effect Size</div>
+  <span class="r-key">r (rank-biserial)</span><span class="r-val"> ${fmt(r)}</span>  <span class="r-note">${Math.abs(r)<0.1?'(negligible)':Math.abs(r)<0.3?'(small)':Math.abs(r)<0.5?'(medium)':'(large)'}</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Decision</div>
+  <span class="${sig?'r-sig':'r-ok'}">${sig?`✗ REJECT H₀ — Significant distributional difference (U = ${U}, p = ${fmts(p)})`:`✓ FAIL TO REJECT H₀ — No significant difference (p = ${fmts(p)})`}</span>
+</div>
+<div class="watermark">Statistica</div>`);
+}
+
+// ============================================================
+// WILCOXON SIGNED-RANK
+// ============================================================
+function runWilcoxon() {
+  const g1=parseData(document.getElementById('wil-g1').value);
+  const g2=parseData(document.getElementById('wil-g2').value);
+  if(g1.length!==g2.length||g1.length<4) return showError('wil-results','Both groups must have equal length (≥ 4).');
+  const diff=g1.map((v,i)=>g2[i]-v).filter(d=>d!==0);
+  const n=diff.length;
+  const ranked=diff.map((d,i)=>({d,abs:Math.abs(d),sign:d>0?1:-1,idx:i})).sort((a,b)=>a.abs-b.abs);
+  ranked.forEach((r,i)=>r.rank=i+1);
+  const Wplus=ranked.filter(r=>r.sign>0).reduce((a,r)=>a+r.rank,0);
+  const Wminus=ranked.filter(r=>r.sign<0).reduce((a,r)=>a+r.rank,0);
+  const W=Math.min(Wplus,Wminus);
+  const mu_W=n*(n+1)/4, sigma_W=Math.sqrt(n*(n+1)*(2*n+1)/24);
+  const z=(W-mu_W)/sigma_W;
+  const p=2*(1-normalCDF(Math.abs(z)));
+  const r=z/Math.sqrt(n);
+  const sig=p<0.05;
+  showResult('wil-results',`
+<div class="results-header"><span>WILCOXON SIGNED-RANK TEST</span><span>n = ${n} (excl. ties)</span></div>
+<div class="r-section">
+  <span class="r-key">W+              </span><span class="r-val"> ${fmt(Wplus,0)}</span><br>
+  <span class="r-key">W-              </span><span class="r-val"> ${fmt(Wminus,0)}</span><br>
+  <span class="r-key">W (test stat)   </span><span class="r-val"> ${W}</span><br>
+  <span class="r-key">Z (normal approx)</span><span class="r-val"> ${fmt(z)}</span><br>
+  <span class="r-key">p-value (2-tail) </span><span class="${sig?'r-sig':'r-ok'}"> ${fmts(p)}</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Effect Size</div>
+  <span class="r-key">r               </span><span class="r-val"> ${fmt(r)}</span>  <span class="r-note">${Math.abs(r)<0.1?'(negligible)':Math.abs(r)<0.3?'(small)':Math.abs(r)<0.5?'(medium)':'(large)'}</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Decision</div>
+  <span class="${sig?'r-sig':'r-ok'}">${sig?`✗ REJECT H₀ — Significant difference in paired ranks (W = ${W}, p = ${fmts(p)})`:`✓ FAIL TO REJECT H₀ — No significant difference (p = ${fmts(p)})`}</span>
+</div>
+<div class="watermark">Statistica</div>`);
+}
+
+// ============================================================
+// KRUSKAL-WALLIS
+// ============================================================
+function runKruskal() {
+  const ids=['kw-g1','kw-g2','kw-g3','kw-g4'];
+  const groups=ids.map(id=>parseData(document.getElementById(id).value)).filter(g=>g.length>0);
+  if(groups.length<2) return showError('kw-results','Need at least 2 groups.');
+  const all=[].concat(...groups), N=all.length, k=groups.length;
+  const sorted=[...all].sort((a,b)=>a-b);
+  const ranks=all.map(v=>{
+    const positions=[]; sorted.forEach((s,i)=>{if(s===v)positions.push(i+1);});
+    return positions.reduce((a,b)=>a+b,0)/positions.length;
+  });
+  let idx=0, H=0;
+  const ns=groups.map(g=>g.length);
+  const groupRankSums=groups.map(g=>{ const rs=ranks.slice(idx,idx+g.length); idx+=g.length; return rs.reduce((a,b)=>a+b,0); });
+  H=12/(N*(N+1))*groupRankSums.reduce((a,rs,i)=>a+rs**2/ns[i],0)-3*(N+1);
+  const df=k-1;
+  const p=chiSquarePValue(H,df);
+  const sig=p<0.05;
+  showResult('kw-results',`
+<div class="results-header"><span>KRUSKAL-WALLIS TEST</span><span>k = ${k}, N = ${N}</span></div>
+<div class="r-section">
+  <table class="r-table">
+  <thead><tr><th>Group</th><th>n</th><th>Rank Sum</th><th>Mean Rank</th></tr></thead>
+  <tbody>${groups.map((g,i)=>`<tr><td>Group ${i+1}</td><td>${ns[i]}</td><td>${fmt(groupRankSums[i],2)}</td><td>${fmt(groupRankSums[i]/ns[i],2)}</td></tr>`).join('')}</tbody></table>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Test Results</div>
+  <span class="r-key">H statistic     </span><span class="r-val"> ${fmt(H)}</span><br>
+  <span class="r-key">df              </span><span class="r-val"> ${df}</span><br>
+  <span class="r-key">p-value         </span><span class="${sig?'r-sig':'r-ok'}"> ${fmts(p)}</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Decision</div>
+  <span class="${sig?'r-sig':'r-ok'}">${sig?`✗ REJECT H₀ — Significant differences among groups (H = ${fmt(H)}, p = ${fmts(p)})`:`✓ FAIL TO REJECT H₀ — No significant differences (p = ${fmts(p)})`}</span>
+</div>
+<div class="watermark">Statistica</div>`);
+}
+
+// ============================================================
+// SPEARMAN RANK CORRELATION
+// ============================================================
+function runSpearman() {
+  const x=parseData(document.getElementById('sp-x').value);
+  const y=parseData(document.getElementById('sp-y').value);
+  if(x.length!==y.length||x.length<3) return showError('sp-results','Both variables must have equal length (≥ 3).');
+  const n=x.length;
+  function rank(arr) {
+    const sorted=[...arr].sort((a,b)=>a-b);
+    return arr.map(v=>{const positions=[];sorted.forEach((s,i)=>{if(s===v)positions.push(i+1);});return positions.reduce((a,b)=>a+b,0)/positions.length;});
+  }
+  const rx=rank(x), ry=rank(y);
+  const d2=rx.map((r,i)=>(r-ry[i])**2).reduce((a,b)=>a+b,0);
+  const rs=1-(6*d2)/(n*(n**2-1));
+  const t=rs*Math.sqrt((n-2)/(1-rs**2));
+  const p=tPValue(t,n-2,'two');
+  const sig=p<0.05;
+  showResult('sp-results',`
+<div class="results-header"><span>SPEARMAN RANK CORRELATION</span><span>n = ${n}</span></div>
+<div class="r-section">
+  <span class="r-key">Spearman's ρ    </span><span class="r-val"> ${fmt(rs)}</span>  <span class="r-note">${Math.abs(rs)<0.1?'(negligible)':Math.abs(rs)<0.3?'(small)':Math.abs(rs)<0.5?'(moderate)':Math.abs(rs)<0.7?'(large)':'(very large)'}</span><br>
+  <span class="r-key">Sum of d²       </span><span class="r-val"> ${fmt(d2)}</span><br>
+  <span class="r-key">t statistic     </span><span class="r-val"> ${fmt(t)}</span><br>
+  <span class="r-key">df              </span><span class="r-val"> ${n-2}</span><br>
+  <span class="r-key">p-value (2-tail) </span><span class="${sig?'r-sig':'r-ok'}"> ${fmts(p)}</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Decision</div>
+  <span class="${sig?'r-sig':'r-ok'}">${sig?`✗ SIGNIFICANT monotonic association (ρ = ${fmt(rs)}, p = ${fmts(p)})`:`✓ NOT SIGNIFICANT (ρ = ${fmt(rs)}, p = ${fmts(p)})`}</span>
+</div>
+<div class="watermark">Statistica</div>`);
+}
+
+// ============================================================
+// DISTRIBUTIONS
+// ============================================================
+function updateDistParams() {
+  const type=document.getElementById('dist-type').value;
+  const container=document.getElementById('dist-params');
+  const templates={
+    normal:`<div class="input-group"><label class="input-label">x value</label><input type="number" id="dp-x" value="1.96"></div><div class="input-group"><label class="input-label">Mean (μ)</label><input type="number" id="dp-mu" value="0"></div><div class="input-group"><label class="input-label">Std Dev (σ)</label><input type="number" id="dp-sigma" value="1"></div>`,
+    t:`<div class="input-group"><label class="input-label">t value</label><input type="number" id="dp-t" value="2.0"></div><div class="input-group"><label class="input-label">df</label><input type="number" id="dp-df" value="20"></div>`,
+    f:`<div class="input-group"><label class="input-label">F value</label><input type="number" id="dp-f" value="3.0"></div><div class="input-group"><label class="input-label">df₁</label><input type="number" id="dp-df1" value="2"></div><div class="input-group"><label class="input-label">df₂</label><input type="number" id="dp-df2" value="30"></div>`,
+    chi2:`<div class="input-group"><label class="input-label">χ² value</label><input type="number" id="dp-chi" value="5.99"></div><div class="input-group"><label class="input-label">df</label><input type="number" id="dp-df" value="2"></div>`,
+    binomial:`<div class="input-group"><label class="input-label">k (successes)</label><input type="number" id="dp-k" value="5"></div><div class="input-group"><label class="input-label">n (trials)</label><input type="number" id="dp-n" value="10"></div><div class="input-group"><label class="input-label">p (probability)</label><input type="number" id="dp-p" step="0.01" value="0.5"></div>`,
+    poisson:`<div class="input-group"><label class="input-label">k (events)</label><input type="number" id="dp-k" value="3"></div><div class="input-group"><label class="input-label">λ (rate)</label><input type="number" id="dp-lambda" step="0.1" value="2"></div>`
+  };
+  container.innerHTML=`<div class="input-grid" style="margin-top:0.5rem">${templates[type]}</div>`;
+}
+
+function calcDistribution() {
+  const type=document.getElementById('dist-type').value;
+  let output='';
+  const g=id=>{const el=document.getElementById(id);return el?parseFloat(el.value):NaN;};
+  if(type==='normal') {
+    const x=g('dp-x'), mu=g('dp-mu'), sigma=g('dp-sigma');
+    const z=(x-mu)/sigma;
+    const pdf=Math.exp(-0.5*z**2)/(sigma*Math.sqrt(2*Math.PI));
+    const cdf=normalCDF(z);
+    output=`<div class="r-title">━ Normal Distribution N(μ=${mu}, σ=${sigma})</div>
+    <span class="r-key">x               </span><span class="r-val"> ${x}</span><br>
+    <span class="r-key">Z-score         </span><span class="r-val"> ${fmt(z)}</span><br>
+    <span class="r-key">PDF f(x)        </span><span class="r-val"> ${fmt(pdf)}</span><br>
+    <span class="r-key">CDF P(X ≤ x)    </span><span class="r-val"> ${fmt(cdf)}</span><br>
+    <span class="r-key">P(X > x)        </span><span class="r-val"> ${fmt(1-cdf)}</span><br>
+    <hr class="divider">
+    <span class="r-key">Critical values (two-tail):</span><br>
+    <span class="r-key">  α=0.05  z=    </span><span class="r-val"> ±1.9600</span><br>
+    <span class="r-key">  α=0.01  z=    </span><span class="r-val"> ±2.5758</span><br>
+    <span class="r-key">  α=0.001 z=    </span><span class="r-val"> ±3.2905</span>`;
+  } else if(type==='t') {
+    const t=g('dp-t'), df=g('dp-df');
+    const p2=tPValue(t,df,'two'), p1=tPValue(t,df,'right');
+    const t95=tCritical(0.05,df,'two'), t99=tCritical(0.01,df,'two');
+    output=`<div class="r-title">━ Student's t-Distribution (df = ${df})</div>
+    <span class="r-key">t               </span><span class="r-val"> ${t}</span><br>
+    <span class="r-key">P(T > t)        </span><span class="r-val"> ${fmt(p1)}</span><br>
+    <span class="r-key">P(|T| > |t|)    </span><span class="r-val"> ${fmt(p2)}</span><br>
+    <hr class="divider">
+    <span class="r-key">t critical (α=0.05, 2-tail)  </span><span class="r-val"> ±${fmt(t95)}</span><br>
+    <span class="r-key">t critical (α=0.01, 2-tail)  </span><span class="r-val"> ±${fmt(t99)}</span>`;
+  } else if(type==='f') {
+    const f=g('dp-f'), df1=g('dp-df1'), df2=g('dp-df2');
+    const p=fPValue(f,df1,df2);
+    const fc05=fCritical(0.05,df1,df2), fc01=fCritical(0.01,df1,df2);
+    output=`<div class="r-title">━ F-Distribution (df₁=${df1}, df₂=${df2})</div>
+    <span class="r-key">F               </span><span class="r-val"> ${f}</span><br>
+    <span class="r-key">P(F > f)        </span><span class="r-val"> ${fmt(p)}</span><br>
+    <hr class="divider">
+    <span class="r-key">F critical (α=0.05)  </span><span class="r-val"> ${fmt(fc05)}</span><br>
+    <span class="r-key">F critical (α=0.01)  </span><span class="r-val"> ${fmt(fc01)}</span>`;
+  } else if(type==='chi2') {
+    const chi=g('dp-chi'), df=g('dp-df');
+    const p=chiSquarePValue(chi,df);
+    const cc05=chiCritical(0.05,df), cc01=chiCritical(0.01,df);
+    output=`<div class="r-title">━ Chi-Square Distribution (df = ${df})</div>
+    <span class="r-key">χ²              </span><span class="r-val"> ${chi}</span><br>
+    <span class="r-key">P(X > χ²)       </span><span class="r-val"> ${fmt(p)}</span><br>
+    <hr class="divider">
+    <span class="r-key">χ² critical (α=0.05)  </span><span class="r-val"> ${fmt(cc05)}</span><br>
+    <span class="r-key">χ² critical (α=0.01)  </span><span class="r-val"> ${fmt(cc01)}</span>`;
+  } else if(type==='binomial') {
+    const k=Math.round(g('dp-k')), n=Math.round(g('dp-n')), p=g('dp-p');
+    function binom(n,k){let r=1;for(let i=0;i<k;i++)r=r*(n-i)/(i+1);return r;}
+    const pmf=binom(n,k)*p**k*(1-p)**(n-k);
+    let cdf=0; for(let i=0;i<=k;i++) cdf+=binom(n,i)*p**i*(1-p)**(n-i);
+    output=`<div class="r-title">━ Binomial Distribution B(n=${n}, p=${p})</div>
+    <span class="r-key">k               </span><span class="r-val"> ${k}</span><br>
+    <span class="r-key">P(X = k)        </span><span class="r-val"> ${fmt(pmf)}</span><br>
+    <span class="r-key">P(X ≤ k)        </span><span class="r-val"> ${fmt(cdf)}</span><br>
+    <span class="r-key">P(X > k)        </span><span class="r-val"> ${fmt(1-cdf)}</span><br>
+    <hr class="divider">
+    <span class="r-key">Expected (μ=np) </span><span class="r-val"> ${fmt(n*p)}</span><br>
+    <span class="r-key">Variance        </span><span class="r-val"> ${fmt(n*p*(1-p))}</span>`;
+  } else if(type==='poisson') {
+    const k=Math.round(g('dp-k')), lambda=g('dp-lambda');
+    function fact(n){return n<=1?1:n*fact(n-1);}
+    const pmf=Math.exp(-lambda)*lambda**k/fact(k);
+    let cdf=0; for(let i=0;i<=k;i++) cdf+=Math.exp(-lambda)*lambda**i/fact(i);
+    output=`<div class="r-title">━ Poisson Distribution Pois(λ=${lambda})</div>
+    <span class="r-key">k               </span><span class="r-val"> ${k}</span><br>
+    <span class="r-key">P(X = k)        </span><span class="r-val"> ${fmt(pmf)}</span><br>
+    <span class="r-key">P(X ≤ k)        </span><span class="r-val"> ${fmt(cdf)}</span><br>
+    <span class="r-key">P(X > k)        </span><span class="r-val"> ${fmt(1-cdf)}</span><br>
+    <hr class="divider">
+    <span class="r-key">Mean = Variance </span><span class="r-val"> λ = ${lambda}</span>`;
+  }
+  showResult('dist-results',`<div class="results-header"><span>DISTRIBUTION CALCULATOR</span></div><div class="r-section">${output}</div><div class="watermark">Statistica</div>`);
+}
+
+// ============================================================
+// CONFIDENCE INTERVALS
+// ============================================================
+function runCI_mean() {
+  let m, s, n;
+  const raw=document.getElementById('ci-data').value.trim();
+  const level=parseInt(document.getElementById('ci-level').value);
+  if(raw) {
+    const data=parseData(raw);
+    if(data.length<2) return showError('ci-mean-results','Enter at least 2 values.');
+    n=data.length; m=mean(data); s=std(data);
+  } else {
+    m=parseFloat(document.getElementById('ci-mean').value);
+    s=parseFloat(document.getElementById('ci-sd').value);
+    n=parseFloat(document.getElementById('ci-n').value);
+    if([m,s,n].some(isNaN)) return showError('ci-mean-results','Fill in mean, SD, and n.');
+  }
+  const alpha=(100-level)/100;
+  const se=s/Math.sqrt(n), df=n-1;
+  const tcrit=tCritical(alpha,df,'two');
+  const lo=m-tcrit*se, hi=m+tcrit*se;
+  showResult('ci-mean-results',`
+<div class="results-header"><span>CONFIDENCE INTERVAL — MEAN</span><span>${level}% CI</span></div>
+<div class="r-section">
+  <span class="r-key">n               </span><span class="r-val"> ${n}</span><br>
+  <span class="r-key">Mean (x̄)        </span><span class="r-val"> ${fmt(m)}</span><br>
+  <span class="r-key">Std Dev (s)     </span><span class="r-val"> ${fmt(s)}</span><br>
+  <span class="r-key">SE              </span><span class="r-val"> ${fmt(se)}</span><br>
+  <span class="r-key">t critical (df=${df})</span><span class="r-val"> ±${fmt(tcrit)}</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Result</div>
+  <span class="r-key">${level}% CI        </span><span class="r-val"> [${fmt(lo)}, ${fmt(hi)}]</span><br>
+  <span class="r-note">Margin of Error = ±${fmt(tcrit*se)}</span>
+</div>
+<div class="watermark">Statistica</div>`);
+}
+
+function runCI_prop() {
+  const x=parseFloat(document.getElementById('ci-px').value);
+  const n=parseFloat(document.getElementById('ci-pn').value);
+  const level=parseInt(document.getElementById('ci-plevel').value);
+  if(isNaN(x)||isNaN(n)||x>n) return showError('ci-prop-results','Enter valid x and n.');
+  const p=x/n, alpha=(100-level)/100;
+  const z=normalInv(1-alpha/2);
+  const se=Math.sqrt(p*(1-p)/n);
+  const lo=Math.max(0,p-z*se), hi=Math.min(1,p+z*se);
+  // Wilson interval
+  const wlo=(x+z**2/2-z*Math.sqrt(x*(n-x)/n+z**2/4))/(n+z**2);
+  const whi=(x+z**2/2+z*Math.sqrt(x*(n-x)/n+z**2/4))/(n+z**2);
+  showResult('ci-prop-results',`
+<div class="results-header"><span>CONFIDENCE INTERVAL — PROPORTION</span><span>${level}% CI</span></div>
+<div class="r-section">
+  <span class="r-key">Successes (x)   </span><span class="r-val"> ${x}</span><br>
+  <span class="r-key">n               </span><span class="r-val"> ${n}</span><br>
+  <span class="r-key">p̂ = x/n        </span><span class="r-val"> ${fmt(p)}</span><br>
+  <span class="r-key">SE              </span><span class="r-val"> ${fmt(se)}</span><br>
+  <span class="r-key">Z critical      </span><span class="r-val"> ±${fmt(z)}</span>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Wald Interval</div>
+  <span class="r-key">${level}% CI        </span><span class="r-val"> [${fmt(lo)}, ${fmt(hi)}]</span>
+</div>
+<div class="r-section">
+  <div class="r-title">━ Wilson Interval (recommended)</div>
+  <span class="r-key">${level}% CI        </span><span class="r-val"> [${fmt(wlo)}, ${fmt(whi)}]</span>
+</div>
+<div class="watermark">Statistica</div>`);
+}
+
+function runCI_diff() {
+  const g1=parseData(document.getElementById('ci-d1').value);
+  const g2=parseData(document.getElementById('ci-d2').value);
+  const level=parseInt(document.getElementById('ci-dlevel').value);
+  if(g1.length<2||g2.length<2) return showError('ci-diff-results','Each group needs at least 2 values.');
+  const alpha=(100-level)/100;
+  const m1=mean(g1), m2=mean(g2), s1=std(g1), s2=std(g2), n1=g1.length, n2=g2.length;
+  const se=Math.sqrt(s1**2/n1+s2**2/n2);
+  const df=Math.floor((s1**2/n1+s2**2/n2)**2/((s1**2/n1)**2/(n1-1)+(s2**2/n2)**2/(n2-1)));
+  const tcrit=tCritical(alpha,df,'two');
+  const diff=m1-m2, lo=diff-tcrit*se, hi=diff+tcrit*se;
+  showResult('ci-diff-results',`
+<div class="results-header"><span>CONFIDENCE INTERVAL — DIFFERENCE OF MEANS</span><span>${level}% CI</span></div>
+<div class="r-section">
+  <table class="r-table">
+  <thead><tr><th>Group</th><th>n</th><th>Mean</th><th>SD</th></tr></thead>
+  <tbody>
+  <tr><td>Group 1</td><td>${n1}</td><td>${fmt(m1)}</td><td>${fmt(s1)}</td></tr>
+  <tr><td>Group 2</td><td>${n2}</td><td>${fmt(m2)}</td><td>${fmt(s2)}</td></tr>
+  </tbody></table>
+</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Result</div>
+  <span class="r-key">Difference (μ₁-μ₂)</span><span class="r-val"> ${fmt(diff)}</span><br>
+  <span class="r-key">SE of diff      </span><span class="r-val"> ${fmt(se)}</span><br>
+  <span class="r-key">df (Welch)      </span><span class="r-val"> ${df}</span><br>
+  <span class="r-key">${level}% CI        </span><span class="r-val"> [${fmt(lo)}, ${fmt(hi)}]</span><br>
+  <span class="r-note">${lo>0||hi<0?'✗ CI does not include 0 — groups differ significantly':'✓ CI includes 0 — difference not statistically significant at α='+(1-level/100).toFixed(2)}</span>
+</div>
+<div class="watermark">Statistica</div>`);
+}
+
+// ============================================================
+// POWER ANALYSIS
+// ============================================================
+function runPowerAnalysis() {
+  const testType=document.getElementById('pwr-test').value;
+  const solve=document.getElementById('pwr-solve').value;
+  const d=parseFloat(document.getElementById('pwr-effect').value);
+  const alpha=parseFloat(document.getElementById('pwr-alpha').value);
+  const power=parseFloat(document.getElementById('pwr-power').value);
+  const n=parseFloat(document.getElementById('pwr-n').value);
+
+  function requiredN_ttest(d, alpha, power) {
+    const za=normalInv(1-alpha/2), zb=normalInv(power);
+    return Math.ceil(((za+zb)/d)**2 + 1);
+  }
+  function achievedPower_ttest(d, alpha, n) {
+    const za=normalInv(1-alpha/2);
+    const delta=d*Math.sqrt(n);
+    return normalCDF(delta-za)+normalCDF(-delta-za);
+  }
+
+  let result='';
+  if(solve==='n') {
+    if(isNaN(d)||isNaN(alpha)||isNaN(power)) return showError('pwr-results','Enter effect size, alpha, and power.');
+    let nReq;
+    if(testType==='ttest') nReq=requiredN_ttest(d,alpha,power);
+    else if(testType==='ttest2') nReq=Math.ceil(requiredN_ttest(d,alpha,power)*2);
+    else if(testType==='prop') {
+      const za=normalInv(1-alpha/2), zb=normalInv(power);
+      nReq=Math.ceil(((za+zb)/d)**2);
+    } else {
+      // ANOVA: use Cohen's f, approximate
+      const za=normalInv(1-alpha/2), zb=normalInv(power);
+      nReq=Math.ceil(((za+zb)/d)**2 + 1);
+    }
+    result=`<span class="r-key">Required n per group  </span><span class="r-val"> ${nReq}</span><br>
+    <span class="r-key">Total N (2 groups)    </span><span class="r-val"> ${nReq*2}</span><br>`;
+  } else if(solve==='power') {
+    if(isNaN(d)||isNaN(alpha)||isNaN(n)) return showError('pwr-results','Enter effect size, alpha, and n.');
+    const pw=achievedPower_ttest(d,alpha,n);
+    result=`<span class="r-key">Achieved Power (1-β)  </span><span class="r-val"> ${fmt(pw)}</span><br>
+    <span class="r-key">Beta (Type II error)  </span><span class="r-val"> ${fmt(1-pw)}</span><br>
+    <span class="${pw>=0.8?'r-ok':'r-sig'}">${pw>=0.8?'✓ Adequate power (≥ 0.80)':'⚠ Insufficient power (< 0.80). Increase sample size.'}</span>`;
+  } else {
+    if(isNaN(n)||isNaN(alpha)||isNaN(power)) return showError('pwr-results','Enter n, alpha, and power to solve for effect size.');
+    const za=normalInv(1-alpha/2), zb=normalInv(power);
+    const minD=(za+zb)/Math.sqrt(n);
+    result=`<span class="r-key">Minimum detectable d  </span><span class="r-val"> ${fmt(minD)}</span><br>
+    <span class="r-note">${minD<0.2?'(negligible)':minD<0.5?'(small)':minD<0.8?'(medium)':'(large)'} effect size</span>`;
+  }
+  showResult('pwr-results',`
+<div class="results-header"><span>POWER ANALYSIS OUTPUT</span></div>
+<div class="r-section">
+  <span class="r-key">Test type       </span><span class="r-val"> ${testType}</span><br>
+  <span class="r-key">Solving for     </span><span class="r-val"> ${solve}</span>
+</div>
+<hr class="divider">
+<div class="r-section"><div class="r-title">━ Result</div>${result}</div>
+<hr class="divider">
+<div class="r-section">
+  <div class="r-title">━ Cohen's d Benchmarks</div>
+  <span class="r-note">Small = 0.2, Medium = 0.5, Large = 0.8</span>
+</div>
+<div class="watermark">Statistica</div>`);
+}
+
+// ============================================================
+// EFFECT SIZE
+// ============================================================
+function updateESFields() {
+  const type=document.getElementById('es-type').value;
+  const container=document.getElementById('es-fields');
+  const templates={
+    cohens_d:`<div class="input-grid"><div class="input-group"><label class="input-label">Mean 1</label><input type="number" id="es-m1"></div><div class="input-group"><label class="input-label">Mean 2</label><input type="number" id="es-m2"></div><div class="input-group"><label class="input-label">SD 1</label><input type="number" id="es-s1"></div><div class="input-group"><label class="input-label">SD 2</label><input type="number" id="es-s2"></div><div class="input-group"><label class="input-label">n1</label><input type="number" id="es-n1"></div><div class="input-group"><label class="input-label">n2</label><input type="number" id="es-n2"></div></div>`,
+    cohens_d1:`<div class="input-grid"><div class="input-group"><label class="input-label">Sample Mean</label><input type="number" id="es-m"></div><div class="input-group"><label class="input-label">Population μ</label><input type="number" id="es-mu"></div><div class="input-group"><label class="input-label">SD (s)</label><input type="number" id="es-sd"></div></div>`,
+    eta2:`<div class="input-grid"><div class="input-group"><label class="input-label">SS Between</label><input type="number" id="es-ssb"></div><div class="input-group"><label class="input-label">SS Total</label><input type="number" id="es-sst"></div></div>`,
+    r_to_d:`<div class="input-grid"><div class="input-group"><label class="input-label">r value</label><input type="number" id="es-r" step="0.01"></div></div>`,
+    d_to_r:`<div class="input-grid"><div class="input-group"><label class="input-label">Cohen's d</label><input type="number" id="es-d" step="0.01"></div></div>`,
+    cramers_v:`<div class="input-grid"><div class="input-group"><label class="input-label">Chi-square (χ²)</label><input type="number" id="es-chi"></div><div class="input-group"><label class="input-label">N</label><input type="number" id="es-n"></div><div class="input-group"><label class="input-label">Min(r,c) - 1</label><input type="number" id="es-k" value="1"></div></div>`,
+    odds:`<div class="input-grid"><div class="input-group"><label class="input-label">Odds Ratio (OR)</label><input type="number" id="es-or" step="0.01"></div></div>`
+  };
+  container.innerHTML=templates[type]||'';
+}
+
+function runEffectSize() {
+  const type=document.getElementById('es-type').value;
+  const g=id=>{const el=document.getElementById(id);return el?parseFloat(el.value):NaN;};
+  let result='', d=NaN, label='';
+  if(type==='cohens_d') {
+    const m1=g('es-m1'),m2=g('es-m2'),s1=g('es-s1'),s2=g('es-s2'),n1=g('es-n1'),n2=g('es-n2');
+    const sp=Math.sqrt(((n1-1)*s1**2+(n2-1)*s2**2)/(n1+n2-2));
+    d=(m1-m2)/sp; label="Cohen's d";
+    result=`<span class="r-key">Pooled SD (sp)  </span><span class="r-val"> ${fmt(sp)}</span><br>`;
+  } else if(type==='cohens_d1') {
+    d=(g('es-m')-g('es-mu'))/g('es-sd'); label="Cohen's d";
+  } else if(type==='eta2') {
+    const eta2=g('es-ssb')/g('es-sst');
+    result=`<span class="r-key">η² (eta-squared)</span><span class="r-val"> ${fmt(eta2)}</span><br>
+    <span class="r-note">${eta2<0.01?'(negligible)':eta2<0.06?'(small)':eta2<0.14?'(medium)':'(large)'}</span>`;
+    showResult('es-results',`<div class="results-header"><span>EFFECT SIZE OUTPUT</span></div><div class="r-section">${result}</div><div class="watermark">Statistica</div>`); return;
+  } else if(type==='r_to_d') {
+    const r=g('es-r'); d=2*r/Math.sqrt(1-r**2); label="Cohen's d";
+    result=`<span class="r-key">r               </span><span class="r-val"> ${fmt(r)}</span><br>`;
+  } else if(type==='d_to_r') {
+    d=g('es-d'); const r=d/Math.sqrt(d**2+4);
+    result=`<span class="r-key">d               </span><span class="r-val"> ${fmt(d)}</span><br><span class="r-key">r               </span><span class="r-val"> ${fmt(r)}</span><br>`;
+    showResult('es-results',`<div class="results-header"><span>EFFECT SIZE CONVERSION</span></div><div class="r-section">${result}</div><div class="watermark">Statistica</div>`); return;
+  } else if(type==='cramers_v') {
+    const chi=g('es-chi'), n=g('es-n'), k=g('es-k');
+    const V=Math.sqrt(chi/(n*k));
+    result=`<span class="r-key">Cramér's V      </span><span class="r-val"> ${fmt(V)}</span><br>
+    <span class="r-note">${V<0.1?'(negligible)':V<0.3?'(small)':V<0.5?'(medium)':'(large)'}</span>`;
+    showResult('es-results',`<div class="results-header"><span>EFFECT SIZE OUTPUT</span></div><div class="r-section">${result}</div><div class="watermark">Statistica</div>`); return;
+  } else if(type==='odds') {
+    const or=g('es-or'); d=Math.log(or)*Math.sqrt(3)/Math.PI;
+    result=`<span class="r-key">Odds Ratio (OR)  </span><span class="r-val"> ${fmt(or)}</span><br>`; label="Cohen's d";
+  }
+  if(!isNaN(d)) {
+    const interp=Math.abs(d)<0.2?'negligible':Math.abs(d)<0.5?'small':Math.abs(d)<0.8?'medium':'large';
+    showResult('es-results',`
+<div class="results-header"><span>EFFECT SIZE OUTPUT</span></div>
+<div class="r-section">
+  ${result}
+  <span class="r-key">${label}           </span><span class="r-val"> ${fmt(d)}</span><br>
+  <span class="r-note">${interp} effect (|d| = ${fmt(Math.abs(d))})</span>
+  <hr class="divider">
+  <div class="r-title">━ Cohen's d Benchmarks</div>
+  <span class="r-note"> < 0.2 = negligible | 0.2–0.5 = small | 0.5–0.8 = medium | > 0.8 = large</span>
+</div>
+<div class="watermark">Statistica</div>`);
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+updateDistParams();
+updateESFields();
+
+// ============================================================
+// UPLOAD / IMPORT SYSTEM
+// ============================================================
+let parsedData = { headers: [], rows: [], rawText: '' };
+let selectedCols = new Set();
+let currentRawText = '';
+
+function openUploadModal() {
+  document.getElementById('uploadOverlay').classList.add('open');
+}
+function closeUploadModal() {
+  document.getElementById('uploadOverlay').classList.remove('open');
+}
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('uploadOverlay')) closeUploadModal();
+}
+
+// Drag-and-drop
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) processFile(file);
+});
+
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (file) processFile(file);
+}
+
+function processFile(file) {
+  if (file.size > 10 * 1024 * 1024) {
+    setStatus('File too large (max 10 MB).', 'error'); return;
+  }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    currentRawText = ev.target.result;
+    const bar = document.getElementById('fileInfoBar');
+    document.getElementById('fileInfoName').textContent = file.name;
+    document.getElementById('fileInfoMeta').textContent = `${(file.size/1024).toFixed(1)} KB`;
+    bar.classList.add('show');
+    document.getElementById('parseOptions').classList.add('show');
+    parseAndRender(currentRawText);
+  };
+  reader.readAsText(file);
+}
+
+function togglePaste() {
+  const a = document.getElementById('pasteArea');
+  a.classList.toggle('open');
+}
+
+function parsePastedData() {
+  const raw = document.getElementById('rawPasteInput').value.trim();
+  if (!raw) { setStatus('No data pasted.', 'error'); return; }
+  currentRawText = raw;
+  document.getElementById('parseOptions').classList.add('show');
+  parseAndRender(raw);
+}
+
+function reparseFile() {
+  if (currentRawText) parseAndRender(currentRawText);
+}
+
+function detectDelimiter(text) {
+  const line = text.split('\n')[0];
+  const counts = { ',': 0, '\t': 0, ';': 0, '|': 0, ' ': 0 };
+  for (const ch of line) if (ch in counts) counts[ch]++;
+  return Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0];
+}
+
+function parseCSV(text, delim) {
+  const lines = text.split('\n');
+  const rows = [];
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    if (delim === ',') {
+      // Handle quoted CSV properly
+      const cells = []; let cur = '', inQ = false;
+      for (let i = 0; i < trimmed.length; i++) {
+        const c = trimmed[i];
+        if (c === '"') { inQ = !inQ; }
+        else if (c === ',' && !inQ) { cells.push(cur.trim()); cur = ''; }
+        else cur += c;
+      }
+      cells.push(cur.trim());
+      rows.push(cells);
+    } else {
+      rows.push(trimmed.split(delim === ' ' ? /\s+/ : delim).map(s=>s.trim()));
+    }
+  }
+  return rows;
+}
+
+function parseAndRender(raw) {
+  const delimSel = document.getElementById('delimSelect').value;
+  const hasHeader = document.getElementById('headerCheck').checked;
+  const skipEmpty = document.getElementById('skipEmptyCheck').checked;
+  const delim = delimSel === 'auto' ? detectDelimiter(raw) : delimSel;
+  let rows = parseCSV(raw, delim);
+  if (skipEmpty) rows = rows.filter(r => r.some(c => c !== ''));
+  if (rows.length === 0) { setStatus('No data found. Check delimiter settings.', 'error'); return; }
+  let headers, dataRows;
+  if (hasHeader && rows.length > 1) {
+    headers = rows[0];
+    dataRows = rows.slice(1);
+  } else {
+    headers = rows[0].map((_,i)=>`Column ${i+1}`);
+    dataRows = rows;
+  }
+  parsedData = { headers, rows: dataRows };
+  renderPreview(headers, dataRows);
+  renderColChips(headers, dataRows);
+  document.getElementById('previewSection').classList.add('show');
+  document.getElementById('colAssignSection').classList.add('show');
+  document.getElementById('sendSection').classList.add('show');
+  setStatus(`✓ Parsed ${dataRows.length} rows × ${headers.length} columns.`, 'ok');
+}
+
+function renderPreview(headers, dataRows) {
+  const preview = dataRows.slice(0, 8);
+  const table = document.getElementById('previewTable');
+  const thead = `<thead><tr>${headers.map((h,i)=>`<th>${h}<span class="col-idx">col ${i+1}</span></th>`).join('')}</tr></thead>`;
+  const tbody = '<tbody>' + preview.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('') + '</tbody>';
+  table.innerHTML = thead + tbody;
+  document.getElementById('previewMeta').textContent = `${dataRows.length} rows × ${headers.length} cols${dataRows.length > 8 ? ' (showing first 8)' : ''}`;
+}
+
+function colType(colIdx, rows) {
+  const vals = rows.map(r => r[colIdx]).filter(v=>v!==undefined&&v!=='');
+  const numCount = vals.filter(v=>!isNaN(Number(v))).length;
+  return numCount / vals.length > 0.8 ? 'numeric' : 'text';
+}
+
+function renderColChips(headers, rows) {
+  selectedCols.clear();
+  const container = document.getElementById('colChips');
+  container.innerHTML = headers.map((h, i) => {
+    const type = colType(i, rows);
+    return `<div class="col-chip" id="chip-${i}" onclick="toggleCol(${i})" title="Col ${i+1}: ${type}">
+      <div>
+        <div class="col-chip-name">${h}</div>
+        <div class="col-chip-type">${type} · ${rows.length} vals</div>
+      </div>
+      <div class="col-chip-check" id="chk-${i}"></div>
+    </div>`;
+  }).join('');
+}
+
+function toggleCol(idx) {
+  if (selectedCols.has(idx)) {
+    selectedCols.delete(idx);
+    document.getElementById('chip-'+idx).classList.remove('selected');
+    document.getElementById('chk-'+idx).textContent = '';
+  } else {
+    selectedCols.add(idx);
+    document.getElementById('chip-'+idx).classList.add('selected');
+    document.getElementById('chk-'+idx).textContent = '✓';
+  }
+}
+
+function getColValues(colIdx) {
+  return parsedData.rows.map(r => r[colIdx]).filter(v => v !== undefined && v !== '').join(', ');
+}
+
+function sendToAnalysis() {
+  if (selectedCols.size === 0) { setStatus('Select at least one column first.', 'error'); return; }
+  const target = document.getElementById('sendTarget').value;
+  const el = document.getElementById(target);
+  if (!el) { setStatus('Target field not found.', 'error'); return; }
+  const cols = [...selectedCols].sort();
+  const combined = cols.map(i => getColValues(i)).join(', ');
+  el.value = combined;
+  const targetLabel = document.getElementById('sendTarget').selectedOptions[0].text;
+  setStatus(`✓ Sent ${cols.length} column(s) → "${targetLabel}"`, 'ok');
+  // Navigate to the right panel
+  const panelMap = {
+    'desc-data':'descriptive','freq-data':'frequency','norm-data':'normality',
+    't1-data':'ttest','t2-g1':'ttest','t2-g2':'ttest','t3-pre':'ttest','t3-post':'ttest',
+    'anova-g1':'anova','anova-g2':'anova','anova-g3':'anova','anova-g4':'anova',
+    'corr-x':'correlation','corr-y':'correlation',
+    'reg-x':'regression','reg-y':'regression',
+    'sp-x':'spearman','sp-y':'spearman',
+    'mw-g1':'mannwhitney','mw-g2':'mannwhitney',
+    'wil-g1':'wilcoxon','wil-g2':'wilcoxon',
+    'kw-g1':'kruskal','kw-g2':'kruskal','kw-g3':'kruskal',
+    'ci-data':'confidence','ci-d1':'confidence','ci-d2':'confidence'
+  };
+  const panel = panelMap[target];
+  if (panel) {
+    setTimeout(() => {
+      document.querySelectorAll('.analysis-panel').forEach(p=>p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+      const panelEl = document.getElementById('panel-'+panel);
+      if (panelEl) panelEl.classList.add('active');
+      const navItems = document.querySelectorAll('.nav-item');
+      navItems.forEach(n => { if (n.getAttribute('onclick') && n.getAttribute('onclick').includes(panel)) n.classList.add('active'); });
+      closeUploadModal();
+    }, 800);
+  }
+}
+
+function sendAllColumns() {
+  if (!parsedData.headers.length) { setStatus('No data loaded yet.', 'error'); return; }
+  // Select all columns
+  parsedData.headers.forEach((_, i) => {
+    selectedCols.add(i);
+    const chip = document.getElementById('chip-'+i);
+    const chk = document.getElementById('chk-'+i);
+    if (chip) chip.classList.add('selected');
+    if (chk) chk.textContent = '✓';
+  });
+  setStatus(`✓ All ${parsedData.headers.length} columns selected. Now choose a target and click Send Data.`, 'ok');
+}
+
+function setStatus(msg, type) {
+  const el = document.getElementById('uploadStatus');
+  el.textContent = msg;
+  el.style.color = type === 'error' ? 'var(--result-red)' : 'var(--accent2)';
+}
+</script>
+
+<footer style="background:var(--sidebar-bg);color:var(--warm-mid);padding:1.25rem 2rem;border-top:2px solid var(--accent);font-family:'DM Sans',sans-serif;font-size:0.82rem;">
+  <div style="max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+      <span style="font-family:'Playfair Display',serif;font-size:1rem;color:white;">Statistica<span style="color:var(--gold)">.</span></span>
+      <span style="opacity:0.4">|</span>
+      <span style="font-family:'DM Mono',monospace;font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--warm-mid);">Agri-PBG Edition v2.0</span>
+      <span style="opacity:0.4">|</span>
+      <span style="font-size:0.78rem;color:var(--warm-mid);">University of Agriculture, Faisalabad (UAF)</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:0.5rem;">
+      <span style="font-family:'DM Mono',monospace;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--warm-mid);">Contact &mdash; Agri-Codex:</span>
+      <a href="mailto:plantbreeder2020.uaf@gmail.com" style="color:var(--gold);text-decoration:none;font-family:'DM Mono',monospace;font-size:0.78rem;font-weight:500;transition:opacity 0.15s;" onmouseover="this.style.opacity='0.75'" onmouseout="this.style.opacity='1'">&#9993; plantbreeder2020.uaf@gmail.com</a>
+    </div>
+  </div>
+  <div style="max-width:1200px;margin:0.6rem auto 0;padding-top:0.6rem;border-top:1px solid rgba(255,255,255,0.07);display:flex;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+    <span style="font-size:0.72rem;color:rgba(168,184,138,0.55);">&#169; 2025 Agri-Codex &mdash; Free to use for academic research. All calculations run locally in your browser.</span>
+    <span style="font-size:0.72rem;color:rgba(168,184,138,0.55);font-family:'DM Mono',monospace;">&#127807; Plant Breeding &amp; Genetics &mdash; UAF</span>
+  </div>
+</footer>
+</body>
+</html>
